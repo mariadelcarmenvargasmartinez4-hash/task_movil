@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/theme/app_theme.dart';
-import 'Presentation/screens/home_screen.dart';
+import 'config/router/app_router.dart';
 
 void main() {
   runApp(const HomeTaskApp());
@@ -11,11 +11,11 @@ class HomeTaskApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'HomeTask Smart',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      routerConfig: appRouter,
     );
   }
 }

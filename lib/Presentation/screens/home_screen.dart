@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../domain/domain.dart';
 import '../../config/theme/app_theme.dart';
 import '../widgets/points_header.dart';
@@ -8,7 +9,8 @@ import '../views/calendario_view.dart';
 import '../views/historial_view.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int pageIndex;
+  const HomeScreen({super.key, required this.pageIndex});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -25,8 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
   late List<SmartDevice> _devices;
 
   @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.pageIndex != widget.pageIndex) {
+      _currentIndex = widget.pageIndex;
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
+    _currentIndex = widget.pageIndex;
     _tasks = [
       const HomeTask(
         id: '1',
@@ -175,6 +186,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+
+
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -218,9 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: NavigationBar(
             selectedIndex: _currentIndex,
             onDestinationSelected: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+              context.go('/home/$index');
             },
             backgroundColor: Colors.white,
             elevation: 0,
