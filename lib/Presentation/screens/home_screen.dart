@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/domain.dart';
 import '../../config/theme/app_theme.dart';
+import '../../infrastructure/datasource/mysql_connection.dart';
 import '../widgets/points_header.dart';
 import '../views/deberes_view.dart';
 import '../views/hogar_iot_view.dart';
@@ -97,77 +98,125 @@ class _HomeScreenState extends State<HomeScreen> {
         type: 'tv',
       ),
     ];
+
+    // Asynchronously query database
+    _loadFromDatabase();
   }
 
-  void _handleTaskCompleted(HomeTask task) {
+  Future<void> _loadFromDatabase() async {
+    try {
+      final dbTasks = await MySqlDbHelper.getTasks();
+      final dbDevices = await MySqlDbHelper.getDevices();
+      
+      int points = 0;
+      for (final t in dbTasks) {
+        if (t.isCompleted) points += t.points;
+      }
+
+      setState(() {
+        _tasks = dbTasks;
+        _devices = dbDevices;
+        _totalPoints = points;
+      });
+    } catch (e) {
+      debugPrint('Database query offline, using static lists: $e');
+    }
+  }
+
+  void _handleTaskCompleted(HomeTask task) async {
     setState(() {
-      // Find and update the task to completed
       _tasks = _tasks.map((t) {
         if (t.id == task.id) {
           return t.copyWith(isCompleted: true);
         }
         return t;
       }).toList();
-      
-      // Add points
       _totalPoints += task.points;
     });
 
-    // Show a beautiful snackbar feedback
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Text('🎉 ', style: TextStyle(fontSize: 18)),
-            Expanded(
-              child: Text(
-                '¡"${task.title}" completada! +${task.points} pts asignados.',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+    try {
+      await MySqlDbHelper.updateTaskCompletion(task.id, true);
+    } catch (e) {
+      debugPrint('Error updating task in MySQL: $e');
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Text('🎉 ', style: TextStyle(fontSize: 18)),
+              Expanded(
+                child: Text(
+                  '¡"${task.title}" completada! +${task.points} pts asignados.',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          backgroundColor: AppTheme.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 2),
         ),
-        backgroundColor: AppTheme.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+    }
   }
 
-  void _handleDeviceToggle(SmartDevice device) {
+  void _handleDeviceToggle(SmartDevice device) async {
+    final newIsOn = !device.isOn;
     setState(() {
       _devices = _devices.map((d) {
         if (d.id == device.id) {
-          return d.copyWith(isOn: !d.isOn);
+          return d.copyWith(isOn: newIsOn);
         }
         return d;
       }).toList();
     });
+
+    try {
+      await MySqlDbHelper.updateDeviceStatus(device.id, newIsOn);
+    } catch (e) {
+      debugPrint('Error updating device status in MySQL: $e');
+    }
   }
 
-  void _handleTaskAdded(String title, String assignee, int points, String time) {
-    setState(() {
-      _tasks.add(
-        HomeTask(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: title,
-          assignee: assignee,
-          time: time,
-          points: points,
-          isCompleted: false,
-        ),
-      );
-    });
+  void _handleTaskAdded(String title, String assignee, int points, String time) async {
+    try {
+      final dbTask = await MySqlDbHelper.addTask(title, assignee, points, time);
+      setState(() {
+        _tasks.add(dbTask);
+      });
+    } catch (e) {
+      debugPrint('MySQL offline, adding task locally: $e');
+      setState(() {
+        _tasks.add(
+          HomeTask(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: title,
+            assignee: assignee,
+            time: time,
+            points: points,
+            isCompleted: false,
+          ),
+        );
+      });
+    }
   }
 
-  void _handleTaskDeleted(String taskId) {
+  void _handleTaskDeleted(String taskId) async {
     setState(() {
       _tasks.removeWhere((t) => t.id == taskId);
     });
+
+    try {
+      await MySqlDbHelper.deleteTask(taskId);
+    } catch (e) {
+      debugPrint('Error deleting task in MySQL: $e');
+    }
   }
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/domain.dart';
 import '../../config/theme/app_theme.dart';
+import '../../infrastructure/datasource/mysql_connection.dart';
 import '../widgets/glass_card.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -25,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _username = '';
   String _password = '';
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       
@@ -33,36 +34,70 @@ class _LoginScreenState extends State<LoginScreen> {
       
       if (_isRegisterMode) {
         // Registration Logic
-        final userExists = _users.any((u) => u.username.toLowerCase() == cleanedUsername);
-        if (userExists) {
-          _showFeedback('El usuario "$_username" ya existe.', isError: true);
-          return;
-        }
-
-        // Add user
-        setState(() {
-          _users.add(
+        try {
+          final registered = await MySqlDbHelper.registerUser(
             FamilyUser(
               username: _username.trim(),
               password: _password,
               role: _selectedRole,
             ),
           );
-          _isRegisterMode = false; // Switch back to login
-        });
 
-        _showFeedback('Usuario registrado con éxito. ¡Inicia sesión!', isError: false);
+          if (!registered) {
+            _showFeedback('El usuario "$_username" ya existe.', isError: true);
+            return;
+          }
+
+          setState(() {
+            _isRegisterMode = false;
+          });
+          _showFeedback('Usuario registrado en MySQL con éxito. ¡Inicia sesión!', isError: false);
+        } catch (dbError) {
+          // Fallback to in-memory registration
+          final userExists = _users.any((u) => u.username.toLowerCase() == cleanedUsername);
+          if (userExists) {
+            _showFeedback('El usuario "$_username" ya existe (En Memoria).', isError: true);
+            return;
+          }
+
+          setState(() {
+            _users.add(
+              FamilyUser(
+                username: _username.trim(),
+                password: _password,
+                role: _selectedRole,
+              ),
+            );
+            _isRegisterMode = false;
+          });
+          _showFeedback('MySQL desconectado. Registrado en memoria local.', isError: false);
+        }
       } else {
         // Login Logic
-        final userIndex = _users.indexWhere(
-          (u) => u.username.toLowerCase() == cleanedUsername && u.password == _password
-        );
+        try {
+          final user = await MySqlDbHelper.validateLogin(_username, _password);
+          if (user != null) {
+            if (mounted) {
+              context.go('/home/0?role=${user.role}');
+            }
+          } else {
+            _showFeedback('Usuario o contraseña incorrectos.', isError: true);
+          }
+        } catch (dbError) {
+          // Fallback to in-memory login
+          final userIndex = _users.indexWhere(
+            (u) => u.username.toLowerCase() == cleanedUsername && u.password == _password
+          );
 
-        if (userIndex != -1) {
-          final user = _users[userIndex];
-          context.go('/home/0?role=${user.role}');
-        } else {
-          _showFeedback('Usuario o contraseña incorrectos.', isError: true);
+          if (userIndex != -1) {
+            final user = _users[userIndex];
+            _showFeedback('Iniciando sesión local (MySQL fuera de línea)...', isError: false);
+            if (mounted) {
+              context.go('/home/0?role=${user.role}');
+            }
+          } else {
+            _showFeedback('Usuario o contraseña incorrectos (En Memoria).', isError: true);
+          }
         }
       }
     }
