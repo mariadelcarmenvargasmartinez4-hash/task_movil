@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../domain/domain.dart';
 import '../../config/theme/app_theme.dart';
 import '../widgets/glass_card.dart';
 
@@ -11,7 +12,79 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  String _selectedRole = 'padre'; // 'padre' or 'hijo'
+  final _formKey = GlobalKey<FormState>();
+  
+  // Local static database of users to persist registered accounts during session
+  static final List<FamilyUser> _users = [
+    const FamilyUser(username: 'papa', password: '123', role: 'padre'),
+    const FamilyUser(username: 'carlos', password: '123', role: 'hijo'),
+  ];
+
+  bool _isRegisterMode = false;
+  String _selectedRole = 'padre'; // Only used in register mode
+  String _username = '';
+  String _password = '';
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      
+      final cleanedUsername = _username.trim().toLowerCase();
+      
+      if (_isRegisterMode) {
+        // Registration Logic
+        final userExists = _users.any((u) => u.username.toLowerCase() == cleanedUsername);
+        if (userExists) {
+          _showFeedback('El usuario "$_username" ya existe.', isError: true);
+          return;
+        }
+
+        // Add user
+        setState(() {
+          _users.add(
+            FamilyUser(
+              username: _username.trim(),
+              password: _password,
+              role: _selectedRole,
+            ),
+          );
+          _isRegisterMode = false; // Switch back to login
+        });
+
+        _showFeedback('Usuario registrado con éxito. ¡Inicia sesión!', isError: false);
+      } else {
+        // Login Logic
+        final userIndex = _users.indexWhere(
+          (u) => u.username.toLowerCase() == cleanedUsername && u.password == _password
+        );
+
+        if (userIndex != -1) {
+          final user = _users[userIndex];
+          context.go('/home/0?role=${user.role}');
+        } else {
+          _showFeedback('Usuario o contraseña incorrectos.', isError: true);
+        }
+      }
+    }
+  }
+
+  void _showFeedback(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: isError ? Colors.redAccent : AppTheme.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +106,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Top Branding
                   Column(
                     children: [
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       const Text(
                         '🏆',
                         style: TextStyle(fontSize: 64),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Text(
                         'HomeTask Smart',
                         style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -58,87 +131,159 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  // Login Card
+                  // Login/Register Card
                   GlassCard(
                     blur: 20,
                     borderRadius: 32,
                     backgroundColor: Colors.white.withValues(alpha: 0.85),
                     padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Selecciona tu Rol',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textDark,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textDark,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Para ingresar al panel familiar correspondiente.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textMuted,
+                          const SizedBox(height: 4),
+                          Text(
+                            _isRegisterMode 
+                                ? 'Regístrate y selecciona tu rol familiar.' 
+                                : 'Ingresa tus credenciales para continuar.',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 20),
 
-                        // Role Options
-                        _buildRoleOption(
-                          role: 'padre',
-                          title: 'Papá / Mamá',
-                          subtitle: 'Administra tareas, premios y dispositivos.',
-                          icon: Icons.supervisor_account,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildRoleOption(
-                          role: 'hijo',
-                          title: 'Hijo / Hija',
-                          subtitle: 'Consulta tus deberes, gana puntos y recompensas.',
-                          icon: Icons.child_care,
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Submit Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Redirect with selected role as query parameter
-                              context.go('/home/0?role=$_selectedRole');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.electricBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
+                          // Username Field
+                          TextFormField(
+                            decoration: InputDecoration(
+                              labelText: 'Usuario',
+                              prefixIcon: const Icon(Icons.person_outline),
+                              border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              elevation: 0,
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Ingresar',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Ingresa tu usuario';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) => _username = value!,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Password Field
+                          TextFormField(
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText: 'Contraseña',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Ingresa tu contraseña';
+                              }
+                              return null;
+                            },
+                            onSaved: (value) => _password = value!,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Role Selector (Only in Register Mode)
+                          if (_isRegisterMode) ...[
+                            const Text(
+                              'Selecciona tu Rol',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textDark,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildRoleOption(
+                              role: 'padre',
+                              title: 'Papá / Mamá',
+                              icon: Icons.supervisor_account,
+                            ),
+                            const SizedBox(height: 8),
+                            _buildRoleOption(
+                              role: 'hijo',
+                              title: 'Hijo / Hija',
+                              icon: Icons.child_care,
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+
+                          // Submit Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.electricBlue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward, size: 18),
-                              ],
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    _isRegisterMode ? 'Registrarse' : 'Ingresar',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.arrow_forward, size: 18),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+
+                          // Mode Switcher Link
+                          Center(
+                            child: TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isRegisterMode = !_isRegisterMode;
+                                  _formKey.currentState?.reset();
+                                });
+                              },
+                              child: Text(
+                                _isRegisterMode
+                                    ? '¿Ya tienes cuenta? Inicia Sesión'
+                                    : '¿No tienes cuenta? Regístrate',
+                                style: const TextStyle(
+                                  color: AppTheme.electricBlue,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -163,7 +308,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildRoleOption({
     required String role,
     required String title,
-    required String subtitle,
     required IconData icon,
   }) {
     final isSelected = _selectedRole == role;
@@ -176,9 +320,9 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? AppTheme.electricBlue : Colors.black.withValues(alpha: 0.08),
             width: 2,
@@ -187,40 +331,18 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.electricBlue : Colors.black.withValues(alpha: 0.04),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? Colors.white : AppTheme.textDark,
-                size: 20,
-              ),
+            Icon(
+              icon,
+              color: isSelected ? AppTheme.electricBlue : AppTheme.textMuted,
+              size: 20,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppTheme.textMuted,
-                    ),
-                  ),
-                ],
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textDark,
               ),
             ),
           ],

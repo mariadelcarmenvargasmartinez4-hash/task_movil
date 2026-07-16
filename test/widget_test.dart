@@ -10,9 +10,10 @@ void main() {
     // Verify that the title "HomeTask Smart" is present on the login screen
     expect(find.text('HomeTask Smart'), findsOneWidget);
     
-    // Verify that the login role selection card is displayed
-    expect(find.text('Selecciona tu Rol'), findsOneWidget);
-    expect(find.text('Papá / Mamá'), findsOneWidget);
-    expect(find.text('Hijo / Hija'), findsOneWidget);
+    // Verify that the login credentials screen is displayed
+    expect(find.text('Iniciar Sesión'), findsOneWidget);
+    expect(find.text('Usuario'), findsOneWidget);
+    expect(find.text('Contraseña'), findsOneWidget);
+    expect(find.text('Ingresar'), findsOneWidget);
   });
 }
