@@ -10,18 +10,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Configuración de la base de datos MySQL (por defecto en XAMPP)
+// Configuración de la base de datos MySQL (XAMPP por defecto)
 $host = "127.0.0.1";
-$db_name = "hometask_smart";
 $username = "root";
 $password = "";
 
-try {
-    $db = new PDO("mysql:host={$host};dbname={$db_name};charset=utf8", $username, $password);
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (PDOException $exception) {
-    echo json_encode(["error" => "Error de conexión: " . $exception->getMessage()]);
+// Intentar conectar a 'smart_home_db' (visto en tu phpMyAdmin) o a 'hometask_smart'
+$databases = ["smart_home_db", "hometask_smart"];
+$db = null;
+$conn_error = "";
+
+foreach ($databases as $db_name) {
+    try {
+        $db = new PDO("mysql:host={$host};dbname={$db_name};charset=utf8", $username, $password);
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        break; // Conexión exitosa, salir del bucle
+    } catch (PDOException $exception) {
+        $conn_error = $exception->getMessage();
+    }
+}
+
+if (!$db) {
+    echo json_encode(["error" => "Error de conexión de base de datos: " . $conn_error]);
     exit();
 }
 

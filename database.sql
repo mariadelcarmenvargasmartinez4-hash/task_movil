@@ -7,7 +7,7 @@ USE hometask_smart;
 -- Tabla de Usuarios
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL, -- Ahora guarda correos electrónicos
     password VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL, -- 'padre' o 'hijo'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -33,10 +33,10 @@ CREATE TABLE IF NOT EXISTS smart_devices (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insertar usuarios iniciales de prueba
+-- Insertar usuarios iniciales de prueba (con correos y contraseñas seguras según las nuevas reglas)
 INSERT INTO users (username, password, role) VALUES 
-('papa', '123', 'padre'),
-('carlos', '123', 'hijo')
+('papa@hometask.com', 'Password123!', 'padre'),
+('carlos@hometask.com', 'Password123!', 'hijo')
 ON DUPLICATE KEY UPDATE username=username;
 
 -- Insertar tareas iniciales de prueba

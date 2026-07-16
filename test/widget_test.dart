@@ -12,7 +12,7 @@ void main() {
     
     // Verify that the login credentials screen is displayed
     expect(find.text('Iniciar Sesión'), findsOneWidget);
-    expect(find.text('Usuario'), findsOneWidget);
+    expect(find.text('Correo Electrónico'), findsOneWidget);
     expect(find.text('Contraseña'), findsOneWidget);
     expect(find.text('Ingresar'), findsOneWidget);
   });

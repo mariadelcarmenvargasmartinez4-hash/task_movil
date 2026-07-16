@@ -17,8 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   
   // Local static database of users to persist registered accounts during session
   static final List<FamilyUser> _users = [
-    const FamilyUser(username: 'papa', password: '123', role: 'padre'),
-    const FamilyUser(username: 'carlos', password: '123', role: 'hijo'),
+    const FamilyUser(username: 'papa@hometask.com', password: 'Password123!', role: 'padre'),
+    const FamilyUser(username: 'carlos@hometask.com', password: 'Password123!', role: 'hijo'),
   ];
 
   bool _isRegisterMode = false;
@@ -200,18 +200,24 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Username Field
+                          // Username Field (Email Address)
                           TextFormField(
+                            keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText: 'Usuario',
-                              prefixIcon: const Icon(Icons.person_outline),
+                              labelText: 'Correo Electrónico',
+                              hintText: 'ejemplo@correo.com',
+                              prefixIcon: const Icon(Icons.email_outlined),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Ingresa tu usuario';
+                                return 'Por favor ingresa tu correo';
+                              }
+                              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                              if (!emailRegex.hasMatch(value.trim())) {
+                                return 'Ingresa un correo electrónico válido';
                               }
                               return null;
                             },
@@ -219,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Password Field
+                          // Password Field (Strict Validations)
                           TextFormField(
                             obscureText: true,
                             decoration: InputDecoration(
@@ -231,7 +237,25 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Ingresa tu contraseña';
+                                return 'Por favor ingresa tu contraseña';
+                              }
+                              if (value.length < 8 || value.length > 20) {
+                                return 'La contraseña debe tener entre 8 y 20 caracteres';
+                              }
+                              if (value.contains(' ')) {
+                                return 'La contraseña no debe contener espacios';
+                              }
+                              if (!value.contains(RegExp(r'[A-Z]'))) {
+                                return 'Debe contener al menos una letra mayúscula';
+                              }
+                              if (!value.contains(RegExp(r'[a-z]'))) {
+                                return 'Debe contener al menos una letra minúscula';
+                              }
+                              if (!value.contains(RegExp(r'[0-9]'))) {
+                                return 'Debe contener al menos un número';
+                              }
+                              if (!value.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) {
+                                return 'Debe contener al menos un carácter especial (ej. !, @, #)';
                               }
                               return null;
                             },
