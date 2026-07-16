@@ -5,24 +5,32 @@ import '../widgets/glass_card.dart';
 
 class HistorialView extends StatelessWidget {
   final List<HomeTask> tasks;
+  final bool isParent;
+  final String? childName;
 
   const HistorialView({
     super.key,
     required this.tasks,
+    required this.isParent,
+    this.childName,
   });
 
   @override
   Widget build(BuildContext context) {
-    final completedTasks = tasks.where((t) => t.isCompleted).toList();
+    // Filter completed tasks: show all if parent, else filter by childName
+    final completedTasks = tasks.where((t) {
+      final matchesRole = isParent || (childName != null && t.assignee == childName);
+      return t.isCompleted && matchesRole;
+    }).toList();
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'HISTORIAL DE ACTIVIDADES',
-            style: TextStyle(
+          Text(
+            isParent ? 'HISTORIAL DE ACTIVIDADES' : 'MI HISTORIAL DE DEBERES',
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: Color(0xFF8E9CB2),

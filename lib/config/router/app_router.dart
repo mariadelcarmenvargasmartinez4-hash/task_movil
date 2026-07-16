@@ -2,16 +2,20 @@ import 'package:go_router/go_router.dart';
 import '../../Presentation/screens/screens.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/home/0',
+  initialLocation: '/login',
   routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     GoRoute(
       path: '/home/:page',
       builder: (context, state) {
         final pageIndex = int.parse(state.pathParameters['page'] ?? '0');
-        if (pageIndex < 0) {
-          return const HomeScreen(pageIndex: 0);
-        }
-        return HomeScreen(pageIndex: pageIndex);
+        final role = state.uri.queryParameters['role'] ?? 'hijo';
+        
+        final safePageIndex = pageIndex < 0 ? 0 : pageIndex;
+        return HomeScreen(pageIndex: safePageIndex, role: role);
       },
     ),
   ],

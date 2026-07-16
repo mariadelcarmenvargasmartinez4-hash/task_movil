@@ -10,14 +10,14 @@ import '../views/historial_view.dart';
 
 class HomeScreen extends StatefulWidget {
   final int pageIndex;
-  const HomeScreen({super.key, required this.pageIndex});
+  final String role;
+  const HomeScreen({super.key, required this.pageIndex, required this.role});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
   int _totalPoints = 180;
 
   // Initial tasks state based on screenshots
@@ -29,15 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void didUpdateWidget(covariant HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.pageIndex != widget.pageIndex) {
-      _currentIndex = widget.pageIndex;
-    }
   }
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.pageIndex;
     _tasks = [
       const HomeTask(
         id: '1',
@@ -153,41 +149,134 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _handleTaskAdded(String title, String assignee, int points, String time) {
+    setState(() {
+      _tasks.add(
+        HomeTask(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: title,
+          assignee: assignee,
+          time: time,
+          points: points,
+          isCompleted: false,
+        ),
+      );
+    });
+  }
+
+  void _handleTaskDeleted(String taskId) {
+    setState(() {
+      _tasks.removeWhere((t) => t.id == taskId);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Map index to corresponding view widget
-    final List<Widget> views = [
-      DeberesView(
-        tasks: _tasks,
-        onTaskCompleted: _handleTaskCompleted,
-      ),
-      HogarIotView(
-        devices: _devices,
-        onDeviceToggle: _handleDeviceToggle,
-      ),
-      const CalendarioView(),
-      HistorialView(
-        tasks: _tasks,
-      ),
-    ];
+    final isParent = widget.role == 'padre';
+    
+    // Dynamically adjust destinations and views based on role
+    final List<Widget> views;
+    final List<NavigationDestination> destinations;
+
+    if (isParent) {
+      views = [
+        DeberesView(
+          tasks: _tasks,
+          onTaskCompleted: _handleTaskCompleted,
+          isParent: true,
+          onTaskAdded: _handleTaskAdded,
+          onTaskDeleted: _handleTaskDeleted,
+        ),
+        HogarIotView(
+          devices: _devices,
+          onDeviceToggle: _handleDeviceToggle,
+        ),
+        const CalendarioView(),
+        HistorialView(
+          tasks: _tasks,
+          isParent: true,
+        ),
+      ];
+
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(Icons.assignment_outlined),
+          selectedIcon: Icon(Icons.assignment),
+          label: 'Deberes',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.lightbulb_outline),
+          selectedIcon: Icon(Icons.lightbulb),
+          label: 'Hogar IoT',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.calendar_today_outlined),
+          selectedIcon: Icon(Icons.calendar_today),
+          label: 'Calendario',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.history_toggle_off),
+          selectedIcon: Icon(Icons.history),
+          label: 'Historial',
+        ),
+      ];
+    } else {
+      views = [
+        DeberesView(
+          tasks: _tasks,
+          onTaskCompleted: _handleTaskCompleted,
+          isParent: false,
+          childName: 'Carlos', // Standard child name for filtering
+        ),
+        const CalendarioView(),
+        HistorialView(
+          tasks: _tasks,
+          isParent: false,
+          childName: 'Carlos',
+        ),
+      ];
+
+      destinations = const [
+        NavigationDestination(
+          icon: Icon(Icons.assignment_outlined),
+          selectedIcon: Icon(Icons.assignment),
+          label: 'Mis Deberes',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.calendar_today_outlined),
+          selectedIcon: Icon(Icons.calendar_today),
+          label: 'Calendario',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.history_toggle_off),
+          selectedIcon: Icon(Icons.history),
+          label: 'Mi Historial',
+        ),
+      ];
+    }
+
+    // Safely clamp active index in case it was out of bounds for current role
+    final int maxIndex = destinations.length - 1;
+    final int activeIndex = widget.pageIndex > maxIndex ? maxIndex : widget.pageIndex;
 
     return Scaffold(
       body: Column(
         children: [
-          // Dynamic Points Header
-          PointsHeader(points: _totalPoints),
+          // Dynamic Points Header with dynamic logout button
+          PointsHeader(
+            points: _totalPoints,
+            onLogout: () => context.go('/login'),
+          ),
           
           // Current View Area
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              child: views[_currentIndex],
+              child: views[activeIndex],
             ),
           ),
         ],
       ),
-
-
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -229,35 +318,14 @@ class _HomeScreenState extends State<HomeScreen> {
             }),
           ),
           child: NavigationBar(
-            selectedIndex: _currentIndex,
+            selectedIndex: activeIndex,
             onDestinationSelected: (index) {
-              context.go('/home/$index');
+              context.go('/home/$index?role=${widget.role}');
             },
             backgroundColor: Colors.white,
             elevation: 0,
             height: 65,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.assignment_outlined),
-                selectedIcon: Icon(Icons.assignment),
-                label: 'Deberes',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.lightbulb_outline),
-                selectedIcon: Icon(Icons.lightbulb),
-                label: 'Hogar IoT',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.calendar_today_outlined),
-                selectedIcon: Icon(Icons.calendar_today),
-                label: 'Calendario',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.history_toggle_off),
-                selectedIcon: Icon(Icons.history),
-                label: 'Historial',
-              ),
-            ],
+            destinations: destinations,
           ),
         ),
       ),

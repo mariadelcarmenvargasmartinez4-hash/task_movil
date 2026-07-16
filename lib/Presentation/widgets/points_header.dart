@@ -4,10 +4,12 @@ import 'glass_card.dart';
 
 class PointsHeader extends StatelessWidget {
   final int points;
+  final VoidCallback? onLogout;
 
   const PointsHeader({
     super.key,
     required this.points,
+    this.onLogout,
   });
 
   @override
@@ -61,31 +63,47 @@ class PointsHeader extends StatelessWidget {
             ),
           ),
           
-          // Points Pill / Capsule
-          GlassCard(
-            blur: 10,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            borderRadius: 20,
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            borderColor: Colors.white.withValues(alpha: 0.3),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '🏆',
-                  style: TextStyle(fontSize: 16),
+          // Points Pill & Logout Button Row
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GlassCard(
+                blur: 10,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                borderRadius: 20,
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                borderColor: Colors.white.withValues(alpha: 0.3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '🏆',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$points pts',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '$points pts',
-                  style: const TextStyle(
+              ),
+              if (onLogout != null) ...[
+                const SizedBox(width: 10),
+                IconButton(
+                  onPressed: onLogout,
+                  icon: const Icon(
+                    Icons.exit_to_app,
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
                   ),
+                  tooltip: 'Cerrar Sesión',
                 ),
               ],
-            ),
+            ],
           ),
         ],
       ),
