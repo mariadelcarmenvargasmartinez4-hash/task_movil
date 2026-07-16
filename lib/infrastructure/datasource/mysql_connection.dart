@@ -1,163 +1,153 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:http/http.dart' as http;
 import '../../domain/domain.dart';
 
 class MySqlDbHelper {
-  // Use 10.0.2.2 for Android Emulator, 127.0.0.1 for desktop/web
-  static final String _host = kIsWeb ? '127.0.0.1' : (defaultTargetPlatform == TargetPlatform.android ? '10.0.2.2' : '127.0.0.1');
-  static const int _port = 3306;
-  static const String _db = 'hometask_smart';
-  static const String _user = 'root';
-  static const String _password = ''; // Default in XAMPP
+  // Configuración del host dinámico para conectar desde web, emulador Android o escritorio
+  static final String _baseUrl = kIsWeb 
+      ? 'http://localhost/hometask_api/api.php' 
+      : (defaultTargetPlatform == TargetPlatform.android 
+          ? 'http://10.0.2.2/hometask_api/api.php' 
+          : 'http://localhost/hometask_api/api.php');
 
-  static ConnectionSettings get _settings => ConnectionSettings(
-    host: _host,
-    port: _port,
-    user: _user,
-    password: _password,
-    db: _db,
-    timeout: const Duration(seconds: 4),
-  );
+  // Método auxiliar para realizar peticiones POST a la API PHP en XAMPP
+  static Future<dynamic> _post(String action, [Map<String, dynamic>? params]) async {
+    final Map<String, dynamic> body = {'action': action};
+    if (params != null) {
+      body.addAll(params);
+    }
 
-  // Helper to run query safely
-  static Future<T> _run<T>(Future<T> Function(MySqlConnection conn) action) async {
-    MySqlConnection? conn;
     try {
-      conn = await MySqlConnection.connect(_settings);
-      final result = await action(conn);
-      return result;
-    } catch (e) {
-      debugPrint('Database error: $e');
-      rethrow;
-    } finally {
-      if (conn != null) {
-        await conn.close();
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 4));
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && decoded.containsKey('error')) {
+          throw Exception(decoded['error']);
+        }
+        return decoded;
+      } else {
+        throw Exception('Error del servidor: ${response.statusCode}');
       }
+    } catch (e) {
+      debugPrint('Error en la petición API HTTP ($action): $e');
+      rethrow;
     }
   }
 
   // --- USERS CRUD ---
 
   static Future<List<FamilyUser>> getUsers() async {
-    return _run((conn) async {
-      final results = await conn.query('SELECT username, password, role FROM users');
-      return results.map((row) => FamilyUser(
-        username: row['username'] as String,
-        password: row['password'] as String,
-        role: row['role'] as String,
+    final result = await _post('get_users');
+    if (result is List) {
+      return result.map((item) => FamilyUser(
+        username: item['username'] as String,
+        password: item['password'] as String,
+        role: item['role'] as String,
       )).toList();
-    });
+    }
+    return [];
   }
 
   static Future<bool> registerUser(FamilyUser user) async {
-    return _run((conn) async {
-      final check = await conn.query(
-        'SELECT id FROM users WHERE LOWER(username) = ?',
-        [user.username.trim().toLowerCase()],
-      );
-      if (check.isNotEmpty) return false;
-
-      await conn.query(
-        'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-        [user.username.trim(), user.password, user.role],
-      );
-      return true;
+    final result = await _post('register_user', {
+      'username': user.username,
+      'password': user.password,
+      'role': user.role,
     });
+    if (result is Map && result.containsKey('success')) {
+      return result['success'] as bool;
+    }
+    return false;
   }
 
   static Future<FamilyUser?> validateLogin(String username, String password) async {
-    try {
-      return await _run((conn) async {
-        final results = await conn.query(
-          'SELECT username, password, role FROM users WHERE LOWER(username) = ? AND password = ?',
-          [username.trim().toLowerCase(), password],
-        );
-        if (results.isEmpty) return null;
-        final row = results.first;
-        return FamilyUser(
-          username: row['username'] as String,
-          password: row['password'] as String,
-          role: row['role'] as String,
-        );
-      });
-    } catch (e) {
-      // Return null or rethrow based on preference. Let's rethrow to handle in UI.
-      rethrow;
+    final result = await _post('validate_login', {
+      'username': username,
+      'password': password,
+    });
+    if (result is Map && result['success'] == true) {
+      final userData = result['user'];
+      return FamilyUser(
+        username: userData['username'] as String,
+        password: userData['password'] as String,
+        role: userData['role'] as String,
+      );
     }
+    return null;
   }
 
   // --- TASKS CRUD ---
 
   static Future<List<HomeTask>> getTasks() async {
-    return _run((conn) async {
-      final results = await conn.query('SELECT id, title, assignee, time, points, is_completed FROM tasks');
-      return results.map((row) => HomeTask(
-        id: row['id'].toString(),
-        title: row['title'] as String,
-        assignee: row['assignee'] as String,
-        time: row['time'] as String,
-        points: row['points'] as int,
-        isCompleted: (row['is_completed'] as int) == 1,
+    final result = await _post('get_tasks');
+    if (result is List) {
+      return result.map((item) => HomeTask(
+        id: item['id'].toString(),
+        title: item['title'] as String,
+        assignee: item['assignee'] as String,
+        time: item['time'] as String,
+        points: item['points'] as int,
+        isCompleted: item['isCompleted'] as bool,
       )).toList();
-    });
+    }
+    return [];
   }
 
   static Future<HomeTask> addTask(String title, String assignee, int points, String time) async {
-    return _run((conn) async {
-      final result = await conn.query(
-        'INSERT INTO tasks (title, assignee, time, points, is_completed) VALUES (?, ?, ?, ?, 0)',
-        [title, assignee, time, points],
-      );
-      final id = result.insertId;
-      return HomeTask(
-        id: id.toString(),
-        title: title,
-        assignee: assignee,
-        time: time,
-        points: points,
-        isCompleted: false,
-      );
+    final result = await _post('add_task', {
+      'title': title,
+      'assignee': assignee,
+      'points': points,
+      'time': time,
     });
+    return HomeTask(
+      id: result['id'].toString(),
+      title: result['title'] as String,
+      assignee: result['assignee'] as String,
+      time: result['time'] as String,
+      points: result['points'] as int,
+      isCompleted: result['isCompleted'] as bool,
+    );
   }
 
   static Future<void> updateTaskCompletion(String id, bool isCompleted) async {
-    await _run((conn) async {
-      await conn.query(
-        'UPDATE tasks SET is_completed = ? WHERE id = ?',
-        [isCompleted ? 1 : 0, int.tryParse(id) ?? 0],
-      );
+    await _post('update_task_completion', {
+      'id': id,
+      'is_completed': isCompleted ? 1 : 0,
     });
   }
 
   static Future<void> deleteTask(String id) async {
-    await _run((conn) async {
-      await conn.query(
-        'DELETE FROM tasks WHERE id = ?',
-        [int.tryParse(id) ?? 0],
-      );
+    await _post('delete_task', {
+      'id': id,
     });
   }
 
   // --- DEVICES CRUD ---
 
   static Future<List<SmartDevice>> getDevices() async {
-    return _run((conn) async {
-      final results = await conn.query('SELECT id, name, is_on, type FROM smart_devices');
-      return results.map((row) => SmartDevice(
-        id: row['id'].toString(),
-        name: row['name'] as String,
-        isOn: (row['is_on'] as int) == 1,
-        type: row['type'] as String,
+    final result = await _post('get_devices');
+    if (result is List) {
+      return result.map((item) => SmartDevice(
+        id: item['id'].toString(),
+        name: item['name'] as String,
+        isOn: item['isOn'] as bool,
+        type: item['type'] as String,
       )).toList();
-    });
+    }
+    return [];
   }
 
   static Future<void> updateDeviceStatus(String id, bool isOn) async {
-    await _run((conn) async {
-      await conn.query(
-        'UPDATE smart_devices SET is_on = ? WHERE id = ?',
-        [isOn ? 1 : 0, int.tryParse(id) ?? 0],
-      );
+    await _post('update_device_status', {
+      'id': id,
+      'is_on': isOn ? 1 : 0,
     });
   }
 }
