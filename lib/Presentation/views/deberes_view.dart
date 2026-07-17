@@ -10,6 +10,7 @@ class DeberesView extends StatelessWidget {
   final String? childName;
   final Function(String title, String assignee, int points, String time)? onTaskAdded;
   final ValueChanged<String>? onTaskDeleted;
+  final List<String> familyMembers;
 
   const DeberesView({
     super.key,
@@ -19,16 +20,18 @@ class DeberesView extends StatelessWidget {
     this.childName,
     this.onTaskAdded,
     this.onTaskDeleted,
+    this.familyMembers = const [],
   });
 
   void _showAddTaskDialog(BuildContext context) {
     final formKey = GlobalKey<FormState>();
     String title = '';
-    String assignee = 'Carlos'; // Default assignee option
+    
+    final assignees = familyMembers.isNotEmpty ? familyMembers : ['Carlos', 'Ana', 'Papá', 'Mamá'];
+    String assignee = assignees.contains('Carlos') ? 'Carlos' : assignees.first; // Default assignee option
     int points = 10; // Default points option
     String time = '8:00 PM'; // Default time option
 
-    final assignees = ['Carlos', 'Ana', 'Papá', 'Mamá'];
     final pointOptions = [5, 10, 15, 20, 25];
     final times = ['6:00 AM', '8:00 AM', '12:00 PM', '2:00 PM', '4:00 PM', '6:00 PM', '8:00 PM', '9:00 PM'];
 

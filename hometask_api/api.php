@@ -101,6 +101,22 @@ switch ($action) {
         }
         break;
 
+    case 'get_users':
+        try {
+            $stmt = $db->query("SELECT username, role FROM users");
+            $users = [];
+            while ($row = $stmt->fetch()) {
+                $users[] = [
+                    "username" => $row['username'],
+                    "role" => $row['role']
+                ];
+            }
+            echo json_encode($users);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
     case 'get_tasks':
         try {
             $stmt = $db->query("SELECT id, title, assignee, time, points, is_completed FROM tasks");

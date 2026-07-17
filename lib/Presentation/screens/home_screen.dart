@@ -41,6 +41,19 @@ class _HomeScreenState extends State<HomeScreen> {
   List<FamilyReward> _rewards = [];
   List<ClaimedReward> _claimedRewards = [];
 
+  // Family users from database
+  List<FamilyUser> _familyUsers = [];
+
+  List<String> get _familyMembersList {
+    if (_familyUsers.isEmpty) return [];
+    return _familyUsers.map((u) {
+      final parts = u.username.split('@');
+      final name = parts[0];
+      if (name.isEmpty) return u.username;
+      return name[0].toUpperCase() + name.substring(1);
+    }).toList();
+  }
+
   @override
   void didUpdateWidget(covariant HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -136,6 +149,10 @@ class _HomeScreenState extends State<HomeScreen> {
       const FamilyReward(id: '5', title: 'Elegir película del domingo', points: 40),
     ];
     _claimedRewards = [];
+    _familyUsers = [
+      const FamilyUser(username: 'papa@hometask.com', password: '', role: 'padre'),
+      const FamilyUser(username: 'carlos@hometask.com', password: '', role: 'hijo'),
+    ];
 
     // Asynchronously query database
     _loadFromDatabase();
@@ -147,12 +164,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final dbDevices = await MySqlDbHelper.getDevices();
       final dbRewards = await MySqlDbHelper.getRewards();
       final dbClaimed = await MySqlDbHelper.getClaimedRewards();
+      final dbUsers = await MySqlDbHelper.getUsers();
       
       setState(() {
         _tasks = dbTasks;
         _devices = dbDevices;
         _rewards = dbRewards;
         _claimedRewards = dbClaimed;
+        _familyUsers = dbUsers;
         _totalPoints = _calculateTotalPoints(dbTasks, dbClaimed);
       });
     } catch (e) {
@@ -323,6 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isParent: true,
           onTaskAdded: _handleTaskAdded,
           onTaskDeleted: _handleTaskDeleted,
+          familyMembers: _familyMembersList,
         ),
         RecompensasView(
           rewards: _rewards,
@@ -377,6 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTaskCompleted: _handleTaskCompleted,
           isParent: false,
           childName: _childDisplayName,
+          familyMembers: _familyMembersList,
         ),
         RecompensasView(
           rewards: _rewards,

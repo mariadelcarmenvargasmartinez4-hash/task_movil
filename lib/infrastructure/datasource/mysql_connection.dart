@@ -47,7 +47,7 @@ class MySqlDbHelper {
     if (result is List) {
       return result.map((item) => FamilyUser(
         username: item['username'] as String,
-        password: item['password'] as String,
+        password: '',
         role: item['role'] as String,
       )).toList();
     }
