@@ -46,9 +46,10 @@ class MySqlDbHelper {
     final result = await _post('get_users');
     if (result is List) {
       return result.map((item) => FamilyUser(
-        username: item['username'] as String,
+        name: item['name'] as String? ?? '',
+        username: item['username'] as String? ?? '',
         password: '',
-        role: item['role'] as String,
+        role: item['role'] as String? ?? '',
       )).toList();
     }
     return [];
@@ -56,6 +57,7 @@ class MySqlDbHelper {
 
   static Future<bool> registerUser(FamilyUser user) async {
     final result = await _post('register_user', {
+      'name': user.name,
       'username': user.username,
       'password': user.password,
       'role': user.role,
@@ -74,9 +76,10 @@ class MySqlDbHelper {
     if (result is Map && result['success'] == true) {
       final userData = result['user'];
       return FamilyUser(
-        username: userData['username'] as String,
-        password: userData['password'] as String,
-        role: userData['role'] as String,
+        name: userData['name'] as String? ?? '',
+        username: userData['username'] as String? ?? '',
+        password: userData['password'] as String? ?? '',
+        role: userData['role'] as String? ?? '',
       );
     }
     return null;
@@ -94,17 +97,19 @@ class MySqlDbHelper {
         time: item['time'] as String,
         points: item['points'] as int,
         isCompleted: item['isCompleted'] as bool,
+        date: item['date'] as String? ?? '2026-05-27',
       )).toList();
     }
     return [];
   }
 
-  static Future<HomeTask> addTask(String title, String assignee, int points, String time) async {
+  static Future<HomeTask> addTask(String title, String assignee, int points, String time, String date) async {
     final result = await _post('add_task', {
       'title': title,
       'assignee': assignee,
       'points': points,
       'time': time,
+      'due_date': date,
     });
     return HomeTask(
       id: result['id'].toString(),
@@ -113,6 +118,7 @@ class MySqlDbHelper {
       time: result['time'] as String,
       points: result['points'] as int,
       isCompleted: result['isCompleted'] as bool,
+      date: result['date'] as String? ?? date,
     );
   }
 
@@ -120,6 +126,17 @@ class MySqlDbHelper {
     await _post('update_task_completion', {
       'id': id,
       'is_completed': isCompleted ? 1 : 0,
+    });
+  }
+
+  static Future<void> updateTask(HomeTask task) async {
+    await _post('update_task', {
+      'id': task.id,
+      'title': task.title,
+      'assignee': task.assignee,
+      'points': task.points,
+      'time': task.time,
+      'due_date': task.date,
     });
   }
 

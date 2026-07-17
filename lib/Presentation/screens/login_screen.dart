@@ -17,12 +17,13 @@ class _LoginScreenState extends State<LoginScreen> {
   
   // Local static database of users to persist registered accounts during session
   static final List<FamilyUser> _users = [
-    const FamilyUser(username: 'papa@hometask.com', password: 'Password123!', role: 'padre'),
-    const FamilyUser(username: 'carlos@hometask.com', password: 'Password123!', role: 'hijo'),
+    const FamilyUser(name: 'Papá', username: 'papa@hometask.com', password: 'Password123!', role: 'padre'),
+    const FamilyUser(name: 'Carlos', username: 'carlos@hometask.com', password: 'Password123!', role: 'hijo'),
   ];
 
   bool _isRegisterMode = false;
   String _selectedRole = 'padre'; // Only used in register mode
+  String _name = '';
   String _username = '';
   String _password = '';
 
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         try {
           final registered = await MySqlDbHelper.registerUser(
             FamilyUser(
+              name: _name.trim(),
               username: _username.trim(),
               password: _password,
               role: _selectedRole,
@@ -63,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() {
             _users.add(
               FamilyUser(
+                name: _name.trim(),
                 username: _username.trim(),
                 password: _password,
                 role: _selectedRole,
@@ -78,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final user = await MySqlDbHelper.validateLogin(_username, _password);
           if (user != null) {
             if (mounted) {
-              context.go('/home/0?role=${user.role}&email=${user.username}');
+              context.go('/home/0?role=${user.role}&email=${user.username}&name=${Uri.encodeComponent(user.name)}');
             }
           } else {
             _showFeedback('Usuario o contraseña incorrectos.', isError: true);
@@ -93,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
             final user = _users[userIndex];
             _showFeedback('Iniciando sesión local (MySQL fuera de línea)...', isError: false);
             if (mounted) {
-              context.go('/home/0?role=${user.role}&email=${user.username}');
+              context.go('/home/0?role=${user.role}&email=${user.username}&name=${Uri.encodeComponent(user.name)}');
             }
           } else {
             _showFeedback('Usuario o contraseña incorrectos (En Memoria).', isError: true);
@@ -199,6 +202,32 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 20),
+
+                          // Name Field (Only in Register Mode)
+                          if (_isRegisterMode) ...[
+                            TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'Nombre Completo',
+                                hintText: 'ej. Carlos',
+                                prefixIcon: const Icon(Icons.person_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Por favor ingresa tu nombre';
+                                }
+                                final lettersOnlyRegex = RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$');
+                                if (!lettersOnlyRegex.hasMatch(value.trim())) {
+                                  return 'El nombre solo debe contener letras (sin espacios ni signos)';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) => _name = value!,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
 
                           // Username Field (Email Address)
                           TextFormField(

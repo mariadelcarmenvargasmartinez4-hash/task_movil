@@ -15,8 +15,8 @@ $host = "127.0.0.1";
 $username = "root";
 $password = "";
 
-// Intentar conectar a 'smart_home_db' (visto en tu phpMyAdmin) o a 'hometask_smart'
-$databases = ["smart_home_db", "hometask_smart"];
+// Conectar a 'smart_home_db'
+$databases = ["smart_home_db"];
 $db = null;
 $conn_error = "";
 
@@ -56,11 +56,12 @@ switch ($action) {
         break;
 
     case 'register_user':
+        $name = isset($data['name']) ? trim($data['name']) : '';
         $user = isset($data['username']) ? trim($data['username']) : '';
         $pass = isset($data['password']) ? $data['password'] : '';
         $role = isset($data['role']) ? $data['role'] : '';
 
-        if (empty($user) || empty($pass) || empty($role)) {
+        if (empty($name) || empty($user) || empty($pass) || empty($role)) {
             echo json_encode(["error" => "Parámetros incompletos"]);
             break;
         }
@@ -75,8 +76,8 @@ switch ($action) {
             }
 
             // Insertar el usuario
-            $stmt = $db->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
-            $stmt->execute([$user, $pass, $role]);
+            $stmt = $db->prepare("INSERT INTO users (name, username, password, role) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$name, $user, $pass, $role]);
             echo json_encode(["success" => true]);
         } catch (Exception $e) {
             echo json_encode(["error" => $e->getMessage()]);
@@ -88,7 +89,7 @@ switch ($action) {
         $pass = isset($data['password']) ? $data['password'] : '';
 
         try {
-            $stmt = $db->prepare("SELECT username, password, role FROM users WHERE LOWER(username) = ? AND password = ?");
+            $stmt = $db->prepare("SELECT name, username, password, role FROM users WHERE LOWER(username) = ? AND password = ?");
             $stmt->execute([strtolower($user), $pass]);
             $userData = $stmt->fetch();
             if ($userData) {
@@ -103,10 +104,11 @@ switch ($action) {
 
     case 'get_users':
         try {
-            $stmt = $db->query("SELECT username, role FROM users");
+            $stmt = $db->query("SELECT name, username, role FROM users");
             $users = [];
             while ($row = $stmt->fetch()) {
                 $users[] = [
+                    "name" => $row['name'],
                     "username" => $row['username'],
                     "role" => $row['role']
                 ];
@@ -119,7 +121,7 @@ switch ($action) {
 
     case 'get_tasks':
         try {
-            $stmt = $db->query("SELECT id, title, assignee, time, points, is_completed FROM tasks");
+            $stmt = $db->query("SELECT id, title, assignee, time, points, is_completed, due_date FROM tasks");
             $tasks = [];
             while ($row = $stmt->fetch()) {
                 $tasks[] = [
@@ -128,7 +130,8 @@ switch ($action) {
                     "assignee" => $row['assignee'],
                     "time" => $row['time'],
                     "points" => (int)$row['points'],
-                    "isCompleted" => (int)$row['is_completed'] === 1
+                    "isCompleted" => (int)$row['is_completed'] === 1,
+                    "date" => $row['due_date']
                 ];
             }
             echo json_encode($tasks);
@@ -142,10 +145,11 @@ switch ($action) {
         $assignee = isset($data['assignee']) ? $data['assignee'] : '';
         $points = isset($data['points']) ? (int)$data['points'] : 10;
         $time = isset($data['time']) ? $data['time'] : '';
+        $date = isset($data['due_date']) ? $data['due_date'] : '2026-05-27';
 
         try {
-            $stmt = $db->prepare("INSERT INTO tasks (title, assignee, time, points, is_completed) VALUES (?, ?, ?, ?, 0)");
-            $stmt->execute([$title, $assignee, $time, $points]);
+            $stmt = $db->prepare("INSERT INTO tasks (title, assignee, time, points, is_completed, due_date) VALUES (?, ?, ?, ?, 0, ?)");
+            $stmt->execute([$title, $assignee, $time, $points, $date]);
             $insertId = $db->lastInsertId();
             echo json_encode([
                 "id" => (string)$insertId,
@@ -153,7 +157,8 @@ switch ($action) {
                 "assignee" => $assignee,
                 "time" => $time,
                 "points" => $points,
-                "isCompleted" => false
+                "isCompleted" => false,
+                "date" => $date
             ]);
         } catch (Exception $e) {
             echo json_encode(["error" => $e->getMessage()]);
@@ -167,6 +172,23 @@ switch ($action) {
         try {
             $stmt = $db->prepare("UPDATE tasks SET is_completed = ? WHERE id = ?");
             $stmt->execute([$isCompleted, $id]);
+            echo json_encode(["success" => true]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'update_task':
+        $id = isset($data['id']) ? (int)$data['id'] : 0;
+        $title = isset($data['title']) ? $data['title'] : '';
+        $assignee = isset($data['assignee']) ? $data['assignee'] : '';
+        $points = isset($data['points']) ? (int)$data['points'] : 10;
+        $time = isset($data['time']) ? $data['time'] : '';
+        $date = isset($data['due_date']) ? $data['due_date'] : '2026-05-27';
+
+        try {
+            $stmt = $db->prepare("UPDATE tasks SET title = ?, assignee = ?, points = ?, time = ?, due_date = ? WHERE id = ?");
+            $stmt->execute([$title, $assignee, $points, $time, $date, $id]);
             echo json_encode(["success" => true]);
         } catch (Exception $e) {
             echo json_encode(["error" => $e->getMessage()]);

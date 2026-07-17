@@ -15,8 +15,19 @@ class CalendarioView extends StatefulWidget {
 class _CalendarioViewState extends State<CalendarioView> {
   int _selectedDay = 27;
 
-  // Map task to calendar days mathematically between Mayo 21st and Mayo 31st
+  // Map task to calendar days based on its YYYY-MM-DD date string
   int _getTaskDay(HomeTask task) {
+    try {
+      final parts = task.date.split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final day = int.parse(parts[2]);
+      if (year == 2026 && month == 5) {
+        return day;
+      }
+    } catch (_) {}
+    
+    // Fallback to mathematical hash distribution for demo tasks
     final idVal = int.tryParse(task.id) ?? task.id.hashCode;
     return (idVal % 11).abs() + 21;
   }

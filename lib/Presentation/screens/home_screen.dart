@@ -14,7 +14,14 @@ class HomeScreen extends StatefulWidget {
   final int pageIndex;
   final String role;
   final String email;
-  const HomeScreen({super.key, required this.pageIndex, required this.role, required this.email});
+  final String name;
+  const HomeScreen({
+    super.key,
+    required this.pageIndex,
+    required this.role,
+    required this.email,
+    required this.name,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _totalPoints = 180;
 
   String get _childDisplayName {
+    if (widget.name.isNotEmpty) return widget.name;
     if (widget.email.isEmpty) return 'Carlos';
     final parts = widget.email.split('@');
     final name = parts[0];
@@ -46,12 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<String> get _familyMembersList {
     if (_familyUsers.isEmpty) return [];
-    return _familyUsers.map((u) {
-      final parts = u.username.split('@');
-      final name = parts[0];
-      if (name.isEmpty) return u.username;
-      return name[0].toUpperCase() + name.substring(1);
-    }).toList();
+    return _familyUsers.map((u) => u.name.isNotEmpty ? u.name : u.username.split('@')[0]).toList();
   }
 
   @override
@@ -150,8 +153,8 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
     _claimedRewards = [];
     _familyUsers = [
-      const FamilyUser(username: 'papa@hometask.com', password: '', role: 'padre'),
-      const FamilyUser(username: 'carlos@hometask.com', password: '', role: 'hijo'),
+      const FamilyUser(name: 'Papá', username: 'papa@hometask.com', password: '', role: 'padre'),
+      const FamilyUser(name: 'Carlos', username: 'carlos@hometask.com', password: '', role: 'hijo'),
     ];
 
     // Asynchronously query database
@@ -161,25 +164,52 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadFromDatabase() async {
     try {
       final dbTasks = await MySqlDbHelper.getTasks();
-      final dbDevices = await MySqlDbHelper.getDevices();
-      final dbRewards = await MySqlDbHelper.getRewards();
-      final dbClaimed = await MySqlDbHelper.getClaimedRewards();
-      final dbUsers = await MySqlDbHelper.getUsers();
-      
       setState(() {
         _tasks = dbTasks;
-        _devices = dbDevices;
-        _rewards = dbRewards;
-        _claimedRewards = dbClaimed;
-        _familyUsers = dbUsers;
-        _totalPoints = _calculateTotalPoints(dbTasks, dbClaimed);
       });
     } catch (e) {
-      debugPrint('Database query offline, using static lists: $e');
-      setState(() {
-        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
-      });
+      debugPrint('Error loading tasks from database: $e');
     }
+
+    try {
+      final dbDevices = await MySqlDbHelper.getDevices();
+      setState(() {
+        _devices = dbDevices;
+      });
+    } catch (e) {
+      debugPrint('Error loading devices from database: $e');
+    }
+
+    try {
+      final dbRewards = await MySqlDbHelper.getRewards();
+      setState(() {
+        _rewards = dbRewards;
+      });
+    } catch (e) {
+      debugPrint('Error loading rewards from database: $e');
+    }
+
+    try {
+      final dbClaimed = await MySqlDbHelper.getClaimedRewards();
+      setState(() {
+        _claimedRewards = dbClaimed;
+      });
+    } catch (e) {
+      debugPrint('Error loading claimed rewards from database: $e');
+    }
+
+    try {
+      final dbUsers = await MySqlDbHelper.getUsers();
+      setState(() {
+        _familyUsers = dbUsers;
+      });
+    } catch (e) {
+      debugPrint('Error loading users from database: $e');
+    }
+
+    setState(() {
+      _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
+    });
   }
 
   void _handleTaskCompleted(HomeTask task) async {
@@ -243,11 +273,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _handleTaskAdded(String title, String assignee, int points, String time) async {
+  void _handleTaskAdded(String title, String assignee, int points, String time, String date) async {
     try {
-      final dbTask = await MySqlDbHelper.addTask(title, assignee, points, time);
+      final dbTask = await MySqlDbHelper.addTask(title, assignee, points, time, date);
       setState(() {
         _tasks.add(dbTask);
+        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
       });
     } catch (e) {
       debugPrint('MySQL offline, adding task locally: $e');
@@ -260,8 +291,10 @@ class _HomeScreenState extends State<HomeScreen> {
             time: time,
             points: points,
             isCompleted: false,
+            date: date,
           ),
         );
+        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
       });
     }
   }
@@ -275,6 +308,19 @@ class _HomeScreenState extends State<HomeScreen> {
       await MySqlDbHelper.deleteTask(taskId);
     } catch (e) {
       debugPrint('Error deleting task in MySQL: $e');
+    }
+  }
+
+  void _handleTaskUpdated(HomeTask task) async {
+    setState(() {
+      _tasks = _tasks.map((t) => t.id == task.id ? task : t).toList();
+      _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
+    });
+
+    try {
+      await MySqlDbHelper.updateTask(task);
+    } catch (e) {
+      debugPrint('Error updating task in MySQL: $e');
     }
   }
 
@@ -342,6 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isParent: true,
           onTaskAdded: _handleTaskAdded,
           onTaskDeleted: _handleTaskDeleted,
+          onTaskUpdated: _handleTaskUpdated,
           familyMembers: _familyMembersList,
         ),
         RecompensasView(
@@ -503,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: NavigationBar(
             selectedIndex: activeIndex,
             onDestinationSelected: (index) {
-              context.go('/home/$index?role=${widget.role}&email=${widget.email}');
+              context.go('/home/$index?role=${widget.role}&email=${widget.email}&name=${Uri.encodeComponent(widget.name)}');
             },
             backgroundColor: Colors.white,
             elevation: 0,

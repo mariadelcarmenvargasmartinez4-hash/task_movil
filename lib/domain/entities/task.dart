@@ -5,6 +5,7 @@ class HomeTask {
   final String time;
   final int points;
   final bool isCompleted;
+  final String date; // format YYYY-MM-DD
 
   const HomeTask({
     required this.id,
@@ -13,6 +14,7 @@ class HomeTask {
     required this.time,
     required this.points,
     this.isCompleted = false,
+    this.date = '2026-05-27',
   });
 
   HomeTask copyWith({
@@ -22,6 +24,7 @@ class HomeTask {
     String? time,
     int? points,
     bool? isCompleted,
+    String? date,
   }) {
     return HomeTask(
       id: id ?? this.id,
@@ -30,6 +33,7 @@ class HomeTask {
       time: time ?? this.time,
       points: points ?? this.points,
       isCompleted: isCompleted ?? this.isCompleted,
+      date: date ?? this.date,
     );
   }
 }

@@ -1,13 +1,14 @@
 -- Script de creación de Base de Datos para HomeTask Smart
 -- Compatible con XAMPP MySQL / MariaDB y phpMyAdmin
 
-CREATE DATABASE IF NOT EXISTS hometask_smart;
-USE hometask_smart;
+CREATE DATABASE IF NOT EXISTS smart_home_db;
+USE smart_home_db;
 
 -- Tabla de Usuarios
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL, -- Ahora guarda correos electrónicos
+    name VARCHAR(100) NOT NULL, -- Nombre real para mostrar y asignar responsabilidades
+    username VARCHAR(100) UNIQUE NOT NULL, -- Correo de login
     password VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL, -- 'padre' o 'hijo'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     time VARCHAR(20) NOT NULL,
     points INT NOT NULL,
     is_completed TINYINT(1) DEFAULT 0,
+    due_date VARCHAR(10) NOT NULL DEFAULT '2026-05-27', -- Fecha programada (formato YYYY-MM-DD)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -51,19 +53,19 @@ CREATE TABLE IF NOT EXISTS claimed_rewards (
     FOREIGN KEY (reward_id) REFERENCES rewards(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insertar usuarios iniciales de prueba (con correos y contraseñas seguras según las nuevas reglas)
-INSERT INTO users (username, password, role) VALUES 
-('papa@hometask.com', 'Password123!', 'padre'),
-('carlos@hometask.com', 'Password123!', 'hijo')
+-- Insertar usuarios iniciales de prueba
+INSERT INTO users (name, username, password, role) VALUES 
+('Papá', 'papa@hometask.com', 'Password123!', 'padre'),
+('Carlos', 'carlos@hometask.com', 'Password123!', 'hijo')
 ON DUPLICATE KEY UPDATE username=username;
 
--- Insertar tareas iniciales de prueba
-INSERT INTO tasks (title, assignee, time, points, is_completed) VALUES 
-('Sacar la basura', 'Papá', '8:00 PM', 10, 0),
-('Regar las plantas', 'Mamá', '6:00 PM', 5, 0),
-('Limpiar la cocina', 'Carlos', '9:00 PM', 15, 0),
-('Pasear al perro', 'Ana', '4:00 PM', 10, 1),
-('Lavar platos', 'Carlos', '2:00 PM', 10, 1);
+-- Insertar tareas iniciales de prueba (con fechas reales en Mayo de 2026)
+INSERT INTO tasks (title, assignee, time, points, is_completed, due_date) VALUES 
+('Sacar la basura', 'Papá', '8:00 PM', 10, 0, '2026-05-21'),
+('Regar las plantas', 'Mamá', '6:00 PM', 5, 0, '2026-05-22'),
+('Limpiar la cocina', 'Carlos', '9:00 PM', 15, 0, '2026-05-27'),
+('Pasear al perro', 'Ana', '4:00 PM', 10, 1, '2026-05-27'),
+('Lavar platos', 'Carlos', '2:00 PM', 10, 1, '2026-05-28');
 
 -- Insertar dispositivos iniciales de prueba
 INSERT INTO smart_devices (name, is_on, type) VALUES 
