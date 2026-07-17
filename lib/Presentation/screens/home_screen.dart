@@ -12,7 +12,8 @@ import '../views/historial_view.dart';
 class HomeScreen extends StatefulWidget {
   final int pageIndex;
   final String role;
-  const HomeScreen({super.key, required this.pageIndex, required this.role});
+  final String email;
+  const HomeScreen({super.key, required this.pageIndex, required this.role, required this.email});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -20,6 +21,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _totalPoints = 180;
+
+  String get _childDisplayName {
+    if (widget.email.isEmpty) return 'Carlos';
+    final parts = widget.email.split('@');
+    final name = parts[0];
+    if (name.isEmpty) return 'Carlos';
+    return name[0].toUpperCase() + name.substring(1);
+  }
 
   // Initial tasks state based on screenshots
   late List<HomeTask> _tasks;
@@ -275,13 +284,13 @@ class _HomeScreenState extends State<HomeScreen> {
           tasks: _tasks,
           onTaskCompleted: _handleTaskCompleted,
           isParent: false,
-          childName: 'Carlos', // Standard child name for filtering
+          childName: _childDisplayName,
         ),
         const CalendarioView(),
         HistorialView(
           tasks: _tasks,
           isParent: false,
-          childName: 'Carlos',
+          childName: _childDisplayName,
         ),
       ];
 
@@ -369,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: NavigationBar(
             selectedIndex: activeIndex,
             onDestinationSelected: (index) {
-              context.go('/home/$index?role=${widget.role}');
+              context.go('/home/$index?role=${widget.role}&email=${widget.email}');
             },
             backgroundColor: Colors.white,
             elevation: 0,

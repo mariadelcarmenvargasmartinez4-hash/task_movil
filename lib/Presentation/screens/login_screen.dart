@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final user = await MySqlDbHelper.validateLogin(_username, _password);
           if (user != null) {
             if (mounted) {
-              context.go('/home/0?role=${user.role}');
+              context.go('/home/0?role=${user.role}&email=${user.username}');
             }
           } else {
             _showFeedback('Usuario o contraseña incorrectos.', isError: true);
@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
             final user = _users[userIndex];
             _showFeedback('Iniciando sesión local (MySQL fuera de línea)...', isError: false);
             if (mounted) {
-              context.go('/home/0?role=${user.role}');
+              context.go('/home/0?role=${user.role}&email=${user.username}');
             }
           } else {
             _showFeedback('Usuario o contraseña incorrectos (En Memoria).', isError: true);

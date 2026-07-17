@@ -13,9 +13,10 @@ final appRouter = GoRouter(
       builder: (context, state) {
         final pageIndex = int.parse(state.pathParameters['page'] ?? '0');
         final role = state.uri.queryParameters['role'] ?? 'hijo';
+        final email = state.uri.queryParameters['email'] ?? '';
         
         final safePageIndex = pageIndex < 0 ? 0 : pageIndex;
-        return HomeScreen(pageIndex: safePageIndex, role: role);
+        return HomeScreen(pageIndex: safePageIndex, role: role, email: email);
       },
     ),
   ],
