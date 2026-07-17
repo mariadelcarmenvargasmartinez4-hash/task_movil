@@ -249,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
           devices: _devices,
           onDeviceToggle: _handleDeviceToggle,
         ),
-        const CalendarioView(),
+        CalendarioView(tasks: _tasks),
         HistorialView(
           tasks: _tasks,
           isParent: true,
@@ -286,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isParent: false,
           childName: _childDisplayName,
         ),
-        const CalendarioView(),
+        CalendarioView(tasks: _tasks),
         HistorialView(
           tasks: _tasks,
           isParent: false,
