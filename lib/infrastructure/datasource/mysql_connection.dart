@@ -150,4 +150,67 @@ class MySqlDbHelper {
       'is_on': isOn ? 1 : 0,
     });
   }
+
+  // --- REWARDS CRUD ---
+
+  static Future<List<FamilyReward>> getRewards() async {
+    final result = await _post('get_rewards');
+    if (result is List) {
+      return result.map((item) => FamilyReward(
+        id: item['id'].toString(),
+        title: item['title'] as String,
+        points: item['points'] as int,
+      )).toList();
+    }
+    return [];
+  }
+
+  static Future<FamilyReward> addReward(String title, int points) async {
+    final result = await _post('add_reward', {
+      'title': title,
+      'points': points,
+    });
+    return FamilyReward(
+      id: result['id'].toString(),
+      title: result['title'] as String,
+      points: result['points'] as int,
+    );
+  }
+
+  static Future<void> deleteReward(String id) async {
+    await _post('delete_reward', {
+      'id': id,
+    });
+  }
+
+  static Future<ClaimedReward> claimReward(String rewardId, String claimedBy, int points) async {
+    final result = await _post('claim_reward', {
+      'reward_id': rewardId,
+      'claimed_by': claimedBy,
+      'points': points,
+    });
+    return ClaimedReward(
+      id: result['id'].toString(),
+      rewardId: result['rewardId'].toString(),
+      title: '', // Resolved locally
+      claimedBy: result['claimedBy'] as String,
+      points: result['points'] as int,
+      claimedAt: DateTime.now().toIso8601String(),
+    );
+  }
+
+  static Future<List<ClaimedReward>> getClaimedRewards() async {
+    final result = await _post('get_claimed_rewards');
+    if (result is List) {
+      return result.map((item) => ClaimedReward(
+        id: item['id'].toString(),
+        rewardId: item['rewardId'].toString(),
+        title: item['title'] as String,
+        claimedBy: item['claimedBy'] as String,
+        points: item['points'] as int,
+        claimedAt: item['claimedAt'] as String,
+      )).toList();
+    }
+    return [];
+  }
 }

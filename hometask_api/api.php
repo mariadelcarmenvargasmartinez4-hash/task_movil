@@ -200,6 +200,93 @@ switch ($action) {
         }
         break;
 
+    case 'get_rewards':
+        try {
+            $stmt = $db->query("SELECT id, title, points FROM rewards");
+            $rewards = [];
+            while ($row = $stmt->fetch()) {
+                $rewards[] = [
+                    "id" => (string)$row['id'],
+                    "title" => $row['title'],
+                    "points" => (int)$row['points']
+                ];
+            }
+            echo json_encode($rewards);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'add_reward':
+        $title = isset($data['title']) ? $data['title'] : '';
+        $points = isset($data['points']) ? (int)$data['points'] : 50;
+
+        try {
+            $stmt = $db->prepare("INSERT INTO rewards (title, points) VALUES (?, ?)");
+            $stmt->execute([$title, $points]);
+            $insertId = $db->lastInsertId();
+            echo json_encode([
+                "id" => (string)$insertId,
+                "title" => $title,
+                "points" => $points
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'delete_reward':
+        $id = isset($data['id']) ? (int)$data['id'] : 0;
+
+        try {
+            $stmt = $db->prepare("DELETE FROM rewards WHERE id = ?");
+            $stmt->execute([$id]);
+            echo json_encode(["success" => true]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'claim_reward':
+        $reward_id = isset($data['reward_id']) ? (int)$data['reward_id'] : 0;
+        $claimed_by = isset($data['claimed_by']) ? trim($data['claimed_by']) : '';
+        $points = isset($data['points']) ? (int)$data['points'] : 0;
+
+        try {
+            $stmt = $db->prepare("INSERT INTO claimed_rewards (reward_id, claimed_by, points) VALUES (?, ?, ?)");
+            $stmt->execute([$reward_id, $claimed_by, $points]);
+            $insertId = $db->lastInsertId();
+            echo json_encode([
+                "id" => (string)$insertId,
+                "rewardId" => (string)$reward_id,
+                "claimedBy" => $claimed_by,
+                "points" => $points
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'get_claimed_rewards':
+        try {
+            $stmt = $db->query("SELECT cr.id, cr.reward_id, r.title, cr.claimed_by, cr.points, cr.claimed_at FROM claimed_rewards cr JOIN rewards r ON cr.reward_id = r.id");
+            $claimed = [];
+            while ($row = $stmt->fetch()) {
+                $claimed[] = [
+                    "id" => (string)$row['id'],
+                    "rewardId" => (string)$row['reward_id'],
+                    "title" => $row['title'],
+                    "claimedBy" => $row['claimed_by'],
+                    "points" => (int)$row['points'],
+                    "claimedAt" => $row['claimed_at']
+                ];
+            }
+            echo json_encode($claimed);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
     default:
         echo json_encode(["error" => "Accion no valida: " . $action]);
         break;

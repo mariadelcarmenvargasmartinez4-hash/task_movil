@@ -33,6 +33,24 @@ CREATE TABLE IF NOT EXISTS smart_devices (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Tabla de Recompensas (Premios)
+CREATE TABLE IF NOT EXISTS rewards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    points INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabla de Recompensas Canjeadas (Historial de Canjes)
+CREATE TABLE IF NOT EXISTS claimed_rewards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reward_id INT NOT NULL,
+    claimed_by VARCHAR(100) NOT NULL,
+    points INT NOT NULL,
+    claimed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reward_id) REFERENCES rewards(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Insertar usuarios iniciales de prueba (con correos y contraseñas seguras según las nuevas reglas)
 INSERT INTO users (username, password, role) VALUES 
 ('papa@hometask.com', 'Password123!', 'padre'),
@@ -52,3 +70,11 @@ INSERT INTO smart_devices (name, is_on, type) VALUES
 ('Luces Sala', 1, 'light'),
 ('Termostato', 0, 'thermostat'),
 ('Smart TV', 1, 'tv');
+
+-- Insertar recompensas iniciales de prueba
+INSERT INTO rewards (title, points) VALUES 
+('1 Hora de Videojuegos', 50),
+('Ir por un helado familiar', 30),
+('Tarde libre de deberes', 100),
+('Permiso para dormir tarde', 60),
+('Elegir película del domingo', 40);

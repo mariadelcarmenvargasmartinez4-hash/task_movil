@@ -8,6 +8,7 @@ import '../views/deberes_view.dart';
 import '../views/hogar_iot_view.dart';
 import '../views/calendario_view.dart';
 import '../views/historial_view.dart';
+import '../views/recompensas_view.dart';
 
 class HomeScreen extends StatefulWidget {
   final int pageIndex;
@@ -36,9 +37,28 @@ class _HomeScreenState extends State<HomeScreen> {
   // Initial smart devices state based on screenshots
   late List<SmartDevice> _devices;
 
+  // Rewards state lists
+  List<FamilyReward> _rewards = [];
+  List<ClaimedReward> _claimedRewards = [];
+
   @override
   void didUpdateWidget(covariant HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+  }
+
+  int _calculateTotalPoints(List<HomeTask> tasks, List<ClaimedReward> claimedRewards) {
+    final isParent = widget.role == 'padre';
+    if (isParent) {
+      final totalEarned = tasks.where((t) => t.isCompleted).fold(0, (sum, t) => sum + t.points);
+      final totalSpent = claimedRewards.fold(0, (sum, cr) => sum + cr.points);
+      return totalEarned - totalSpent;
+    } else {
+      final name = _childDisplayName.toLowerCase();
+      final email = widget.email.toLowerCase();
+      final childEarned = tasks.where((t) => t.isCompleted && t.assignee.toLowerCase() == name).fold(0, (sum, t) => sum + t.points);
+      final childSpent = claimedRewards.where((cr) => cr.claimedBy.toLowerCase() == email).fold(0, (sum, cr) => sum + cr.points);
+      return childEarned - childSpent;
+    }
   }
 
   @override
@@ -108,6 +128,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ];
 
+    _rewards = [
+      const FamilyReward(id: '1', title: '1 Hora de Videojuegos', points: 50),
+      const FamilyReward(id: '2', title: 'Ir por un helado familiar', points: 30),
+      const FamilyReward(id: '3', title: 'Tarde libre de deberes', points: 100),
+      const FamilyReward(id: '4', title: 'Permiso para dormir tarde', points: 60),
+      const FamilyReward(id: '5', title: 'Elegir película del domingo', points: 40),
+    ];
+    _claimedRewards = [];
+
     // Asynchronously query database
     _loadFromDatabase();
   }
@@ -116,19 +145,21 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final dbTasks = await MySqlDbHelper.getTasks();
       final dbDevices = await MySqlDbHelper.getDevices();
+      final dbRewards = await MySqlDbHelper.getRewards();
+      final dbClaimed = await MySqlDbHelper.getClaimedRewards();
       
-      int points = 0;
-      for (final t in dbTasks) {
-        if (t.isCompleted) points += t.points;
-      }
-
       setState(() {
         _tasks = dbTasks;
         _devices = dbDevices;
-        _totalPoints = points;
+        _rewards = dbRewards;
+        _claimedRewards = dbClaimed;
+        _totalPoints = _calculateTotalPoints(dbTasks, dbClaimed);
       });
     } catch (e) {
       debugPrint('Database query offline, using static lists: $e');
+      setState(() {
+        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
+      });
     }
   }
 
@@ -140,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
         return t;
       }).toList();
-      _totalPoints += task.points;
+      _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
     });
 
     try {
@@ -228,6 +259,54 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _handleRewardAdded(String title, int points) async {
+    try {
+      final newReward = await MySqlDbHelper.addReward(title, points);
+      setState(() {
+        _rewards.add(newReward);
+      });
+    } catch (e) {
+      final localId = (DateTime.now().millisecondsSinceEpoch % 10000).toString();
+      setState(() {
+        _rewards.add(FamilyReward(id: localId, title: title, points: points));
+      });
+    }
+  }
+
+  void _handleRewardDeleted(String rewardId) async {
+    setState(() {
+      _rewards.removeWhere((r) => r.id == rewardId);
+    });
+    try {
+      await MySqlDbHelper.deleteReward(rewardId);
+    } catch (e) {
+      debugPrint('Error deleting reward in MySQL: $e');
+    }
+  }
+
+  void _handleRewardClaimed(String rewardId, int points) async {
+    try {
+      final claim = await MySqlDbHelper.claimReward(rewardId, widget.email, points);
+      setState(() {
+        _claimedRewards.add(claim);
+        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
+      });
+    } catch (e) {
+      final localId = (DateTime.now().millisecondsSinceEpoch % 10000).toString();
+      setState(() {
+        _claimedRewards.add(ClaimedReward(
+          id: localId,
+          rewardId: rewardId,
+          title: '',
+          claimedBy: widget.email,
+          points: points,
+          claimedAt: DateTime.now().toIso8601String(),
+        ));
+        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isParent = widget.role == 'padre';
@@ -245,6 +324,14 @@ class _HomeScreenState extends State<HomeScreen> {
           onTaskAdded: _handleTaskAdded,
           onTaskDeleted: _handleTaskDeleted,
         ),
+        RecompensasView(
+          rewards: _rewards,
+          totalPoints: _totalPoints,
+          isParent: true,
+          childName: '',
+          onRewardAdded: _handleRewardAdded,
+          onRewardDeleted: _handleRewardDeleted,
+        ),
         HogarIotView(
           devices: _devices,
           onDeviceToggle: _handleDeviceToggle,
@@ -261,6 +348,11 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icon(Icons.assignment_outlined),
           selectedIcon: Icon(Icons.assignment),
           label: 'Deberes',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.card_giftcard_outlined),
+          selectedIcon: Icon(Icons.card_giftcard),
+          label: 'Premios',
         ),
         NavigationDestination(
           icon: Icon(Icons.lightbulb_outline),
@@ -286,6 +378,13 @@ class _HomeScreenState extends State<HomeScreen> {
           isParent: false,
           childName: _childDisplayName,
         ),
+        RecompensasView(
+          rewards: _rewards,
+          totalPoints: _totalPoints,
+          isParent: false,
+          childName: _childDisplayName,
+          onRewardClaimed: _handleRewardClaimed,
+        ),
         CalendarioView(tasks: _tasks),
         HistorialView(
           tasks: _tasks,
@@ -299,6 +398,11 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: Icon(Icons.assignment_outlined),
           selectedIcon: Icon(Icons.assignment),
           label: 'Mis Deberes',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.card_giftcard_outlined),
+          selectedIcon: Icon(Icons.card_giftcard),
+          label: 'Premios',
         ),
         NavigationDestination(
           icon: Icon(Icons.calendar_today_outlined),
