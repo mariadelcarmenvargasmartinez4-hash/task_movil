@@ -382,7 +382,7 @@ class DeberesView extends StatelessWidget {
   Widget build(BuildContext context) {
     // Filter pending tasks: show all if parent, else filter by childName
     final pendingTasks = tasks.where((t) {
-      final matchesRole = isParent || (childName != null && t.assignee == childName);
+      final matchesRole = isParent || (childName != null && t.assignee.trim().toLowerCase() == childName!.trim().toLowerCase());
       return !t.isCompleted && matchesRole;
     }).toList();
 

@@ -19,7 +19,7 @@ class HistorialView extends StatelessWidget {
   Widget build(BuildContext context) {
     // Filter completed tasks: show all if parent, else filter by childName
     final completedTasks = tasks.where((t) {
-      final matchesRole = isParent || (childName != null && t.assignee == childName);
+      final matchesRole = isParent || (childName != null && t.assignee.trim().toLowerCase() == childName!.trim().toLowerCase());
       return t.isCompleted && matchesRole;
     }).toList();
 
