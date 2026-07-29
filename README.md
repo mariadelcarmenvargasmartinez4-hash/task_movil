@@ -1,6 +1,6 @@
-# task_movie
+# HomeTask App
 
-A new Flutter project.
+A gamified Flutter application for managing home chores and IoT devices.
 
 ## Getting Started
 
