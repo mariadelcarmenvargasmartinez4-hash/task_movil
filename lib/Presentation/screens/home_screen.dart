@@ -28,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _totalPoints = 180;
+  int _totalPoints = 0; // Dynamic points initialized to 0
   Map<String, dynamic>? _currentWeather;
   bool _isLoadingWeather = false;
 
@@ -990,6 +990,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
