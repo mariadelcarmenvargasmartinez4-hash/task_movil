@@ -30,7 +30,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _totalPoints = 0; // Dynamic points initialized to 0
   Map<String, dynamic>? _currentWeather;
-  bool _isLoadingWeather = false;
+  bool _isLoadingWeather = false; // Tracks weather API state
 
   String get _childDisplayName {
     if (widget.name.isNotEmpty) return widget.name;
