@@ -362,6 +362,105 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showLinkWatchDialog() {
+    final textController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.watch_rounded, color: AppTheme.electricBlue),
+              SizedBox(width: 10),
+              Text('Vincular Smartwatch', style: TextStyle(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Ingresa el código de 4 dígitos (PIN) que se muestra en la pantalla de tu reloj inteligente.',
+                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8, color: AppTheme.textDark),
+                decoration: InputDecoration(
+                  hintText: '0000',
+                  counterText: '',
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.electricBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                final pin = textController.text.trim();
+                if (pin.length != 4) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('El PIN debe tener 4 dígitos')),
+                  );
+                  return;
+                }
+
+                // Guardar las referencias antes de la llamada asíncrona para evitar warnings
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                navigator.pop(); // Cerrar diálogo de PIN
+
+                // Mostrar cargando
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) {
+                    return const Center(child: CircularProgressIndicator(color: AppTheme.electricBlue));
+                  },
+                );
+
+                final response = await MySqlDbHelper.linkPairingCode(pin, widget.email);
+                
+                if (mounted) {
+                  navigator.pop(); // Quitar cargando (cierra el diálogo de carga al ser la ruta superior)
+                  final success = response['success'] as bool? ?? false;
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text(response['message'] as String? ?? 'Resultado de vinculación'),
+                      backgroundColor: success ? AppTheme.green : Colors.redAccent,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Vincular'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _handleTaskCompleted(HomeTask task) async {
     setState(() {
       _tasks = _tasks.map((t) {
@@ -662,6 +761,7 @@ class _HomeScreenState extends State<HomeScreen> {
             points: _totalPoints,
             onLogout: () => context.go('/login'),
             onNotificationsTap: _showNotificationsBottomSheet,
+            onLinkWatch: _showLinkWatchDialog,
           ),
           if (_currentWeather != null)
             Padding(

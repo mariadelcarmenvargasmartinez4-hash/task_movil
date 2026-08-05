@@ -522,6 +522,85 @@ switch ($action) {
         }
         break;
 
+    case 'generate_pairing_code':
+        $deviceId = isset($data['device_id']) ? trim($data['device_id']) : '';
+        if (empty($deviceId)) {
+            echo json_encode(["error" => "ID de dispositivo vacío"]);
+            break;
+        }
+        try {
+            $pin = sprintf("%04d", rand(0, 9999));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+
+            $stmt = $db->prepare("INSERT INTO smartwatch_pairing (device_id, pin_code, username, expires_at) 
+                                  VALUES (?, ?, NULL, ?) 
+                                  ON DUPLICATE KEY UPDATE pin_code = ?, username = NULL, expires_at = ?");
+            $stmt->execute([$deviceId, $pin, $expiresAt, $pin, $expiresAt]);
+
+            echo json_encode(["success" => true, "pin" => $pin]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'link_pairing_code':
+        $pin = isset($data['pin']) ? trim($data['pin']) : '';
+        $user = isset($data['username']) ? trim($data['username']) : '';
+
+        if (empty($pin) || empty($user)) {
+            echo json_encode(["error" => "Parámetros incompletos"]);
+            break;
+        }
+
+        try {
+            $stmt = $db->prepare("SELECT device_id FROM smartwatch_pairing 
+                                  WHERE pin_code = ? AND expires_at > NOW() AND username IS NULL");
+            $stmt->execute([$pin]);
+            $row = $stmt->fetch();
+
+            if ($row) {
+                $deviceId = $row['device_id'];
+                $stmtUpdate = $db->prepare("UPDATE smartwatch_pairing SET username = ? WHERE device_id = ? AND pin_code = ?");
+                $stmtUpdate->execute([$user, $deviceId, $pin]);
+                echo json_encode(["success" => true, "message" => "Vinculación exitosa"]);
+            } else {
+                echo json_encode(["success" => false, "message" => "PIN inválido o expirado"]);
+            }
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'check_pairing_status':
+        $deviceId = isset($data['device_id']) ? trim($data['device_id']) : '';
+        if (empty($deviceId)) {
+            echo json_encode(["error" => "ID de dispositivo vacío"]);
+            break;
+        }
+
+        try {
+            $stmt = $db->prepare("SELECT username FROM smartwatch_pairing WHERE device_id = ? AND expires_at > NOW()");
+            $stmt->execute([$deviceId]);
+            $row = $stmt->fetch();
+
+            if ($row && !empty($row['username'])) {
+                $stmtUser = $db->prepare("SELECT name, username, role FROM users WHERE LOWER(username) = ?");
+                $stmtUser->execute([strtolower($row['username'])]);
+                $userData = $stmtUser->fetch();
+                
+                if ($userData) {
+                    echo json_encode(["success" => true, "linked" => true, "user" => $userData]);
+                } else {
+                    echo json_encode(["success" => false, "linked" => false, "message" => "Usuario no encontrado"]);
+                }
+            } else {
+                echo json_encode(["success" => true, "linked" => false]);
+            }
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
     default:
         echo json_encode(["error" => "Accion no valida: " . $action]);
         break;

@@ -6,12 +6,14 @@ class PointsHeader extends StatelessWidget {
   final int points;
   final VoidCallback? onLogout;
   final VoidCallback? onNotificationsTap;
+  final VoidCallback? onLinkWatch;
 
   const PointsHeader({
     super.key,
     required this.points,
     this.onLogout,
     this.onNotificationsTap,
+    this.onLinkWatch,
   });
 
   @override
@@ -103,6 +105,17 @@ class PointsHeader extends StatelessWidget {
                     color: Colors.white,
                   ),
                   tooltip: 'Notificaciones Familiares',
+                ),
+              ],
+              if (onLinkWatch != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onLinkWatch,
+                  icon: const Icon(
+                    Icons.watch_rounded,
+                    color: Colors.white,
+                  ),
+                  tooltip: 'Vincular Smartwatch',
                 ),
               ],
               if (onLogout != null) ...[

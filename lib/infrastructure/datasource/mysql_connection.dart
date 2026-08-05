@@ -294,4 +294,22 @@ class MySqlDbHelper {
     }
     return [];
   }
+
+  static Future<Map<String, dynamic>> linkPairingCode(String pin, String username) async {
+    try {
+      final result = await _post('link_pairing_code', {
+        'pin': pin,
+        'username': username,
+      });
+      if (result is Map) {
+        return {
+          'success': result['success'] as bool? ?? false,
+          'message': result['message'] as String? ?? (result['error'] as String? ?? 'Error desconocido'),
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+    return {'success': false, 'message': 'Respuesta no válida del servidor'};
+  }
 }
