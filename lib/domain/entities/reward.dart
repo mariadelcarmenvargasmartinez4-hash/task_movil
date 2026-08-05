@@ -64,4 +64,22 @@ class ClaimedReward {
       'claimedAt': claimedAt,
     };
   }
+
+  ClaimedReward copyWith({
+    String? id,
+    String? rewardId,
+    String? title,
+    String? claimedBy,
+    int? points,
+    String? claimedAt,
+  }) {
+    return ClaimedReward(
+      id: id ?? this.id,
+      rewardId: rewardId ?? this.rewardId,
+      title: title ?? this.title,
+      claimedBy: claimedBy ?? this.claimedBy,
+      points: points ?? this.points,
+      claimedAt: claimedAt ?? this.claimedAt,
+    );
+  }
 }

@@ -29,6 +29,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _totalPoints = 180;
+  Map<String, dynamic>? _currentWeather;
+  bool _isLoadingWeather = false;
 
   String get _childDisplayName {
     if (widget.name.isNotEmpty) return widget.name;
@@ -210,6 +212,154 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
     });
+
+    _syncWeather(silent: true);
+  }
+
+  Future<void> _syncWeather({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoadingWeather = true;
+      });
+    }
+
+    try {
+      final result = await MySqlDbHelper.syncWeather();
+      setState(() {
+        _currentWeather = result['weather'] as Map<String, dynamic>;
+        _tasks = result['tasks'] as List<HomeTask>;
+        _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
+      });
+      if (!silent && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🌤️ Clima del Hogar: ${_currentWeather?["description"]} (${_currentWeather?["temp"]}°C). Prioridades recalculadas!'),
+            backgroundColor: AppTheme.electricBlue,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error syncing weather: $e');
+      if (!silent && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error al sincronizar el clima.'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingWeather = false;
+        });
+      }
+    }
+  }
+
+  void _showNotificationsBottomSheet() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return FutureBuilder<List<FamilyNotification>>(
+          future: MySqlDbHelper.getNotifications(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 300,
+                child: Center(child: CircularProgressIndicator(color: AppTheme.electricBlue)),
+              );
+            }
+            if (snapshot.hasError) {
+              return SizedBox(
+                height: 300,
+                child: Center(child: Text('Error: ${snapshot.error}')),
+              );
+            }
+            final notifs = snapshot.data ?? [];
+            return Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Historial de Alertas',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textDark,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (notifs.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40.0),
+                      child: Center(
+                        child: Text(
+                          'No hay notificaciones familiares aún.',
+                          style: TextStyle(color: AppTheme.textMuted),
+                        ),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: notifs.length,
+                        separatorBuilder: (context, index) => const Divider(),
+                        itemBuilder: (context, index) {
+                          final notif = notifs[index];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: AppTheme.electricBlue.withValues(alpha: 0.1),
+                              child: const Icon(Icons.notifications_active, color: AppTheme.electricBlue),
+                            ),
+                            title: Text(
+                              notif.title,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(notif.body, style: const TextStyle(fontSize: 13, color: AppTheme.textDark)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  notif.createdAt,
+                                  style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _handleTaskCompleted(HomeTask task) async {
@@ -225,6 +375,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       await MySqlDbHelper.updateTaskCompletion(task.id, true);
+      MySqlDbHelper.sendFamilyNotification(
+        '¡Deber Completado! 🎉',
+        '${widget.name.isNotEmpty ? widget.name : _childDisplayName} completó la tarea "${task.title}" (+${task.points} pts).',
+      );
     } catch (e) {
       debugPrint('Error updating task in MySQL: $e');
     }
@@ -273,13 +427,17 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _handleTaskAdded(String title, String assignee, int points, String time, String date) async {
+  void _handleTaskAdded(String title, String assignee, int points, String time, String date, [String priority = 'media']) async {
     try {
-      final dbTask = await MySqlDbHelper.addTask(title, assignee, points, time, date);
+      final dbTask = await MySqlDbHelper.addTask(title, assignee, points, time, date, priority);
       setState(() {
         _tasks.add(dbTask);
         _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
       });
+      MySqlDbHelper.sendFamilyNotification(
+        'Nuevo Deber Asignado 📝',
+        'Se asignó a $assignee la tarea "$title" por +$points pts.',
+      );
     } catch (e) {
       debugPrint('MySQL offline, adding task locally: $e');
       setState(() {
@@ -292,6 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
             points: points,
             isCompleted: false,
             date: date,
+            priority: priority,
           ),
         );
         _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
@@ -352,10 +511,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleRewardClaimed(String rewardId, int points) async {
     try {
       final claim = await MySqlDbHelper.claimReward(rewardId, widget.email, points);
+      final reward = _rewards.firstWhere((r) => r.id == rewardId, orElse: () => const FamilyReward(id: '', title: 'Recompensa', points: 0));
+      final rTitle = reward.title;
       setState(() {
-        _claimedRewards.add(claim);
+        _claimedRewards.add(claim.copyWith(title: rTitle));
         _totalPoints = _calculateTotalPoints(_tasks, _claimedRewards);
       });
+      MySqlDbHelper.sendFamilyNotification(
+        'Premio Canjeado 🎁',
+        '${widget.name.isNotEmpty ? widget.name : _childDisplayName} canjeó el premio: "$rTitle" por $points pts.',
+      );
     } catch (e) {
       final localId = (DateTime.now().millisecondsSinceEpoch % 10000).toString();
       setState(() {
@@ -496,7 +661,65 @@ class _HomeScreenState extends State<HomeScreen> {
           PointsHeader(
             points: _totalPoints,
             onLogout: () => context.go('/login'),
+            onNotificationsTap: _showNotificationsBottomSheet,
           ),
+          if (_currentWeather != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.electricBlue.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      _currentWeather?['emoji'] ?? '🌤️',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Clima del Hogar: ${_currentWeather?["description"]}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Temperatura actual: ${_currentWeather?["temp"]}°C • Prioridades de deberes ajustadas',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: _isLoadingWeather
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.electricBlue),
+                            )
+                          : const Icon(Icons.sync, size: 18, color: AppTheme.electricBlue),
+                      onPressed: () => _syncWeather(),
+                      tooltip: 'Sincronizar Prioridades con el Clima',
+                    ),
+                  ],
+                ),
+              ),
+            ),
           
           // Current View Area
           Expanded(

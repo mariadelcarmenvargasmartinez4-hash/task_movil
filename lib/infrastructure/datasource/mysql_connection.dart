@@ -98,18 +98,20 @@ class MySqlDbHelper {
         points: item['points'] as int,
         isCompleted: item['isCompleted'] as bool,
         date: item['date'] as String? ?? '2026-05-27',
+        priority: item['priority'] as String? ?? 'media',
       )).toList();
     }
     return [];
   }
 
-  static Future<HomeTask> addTask(String title, String assignee, int points, String time, String date) async {
+  static Future<HomeTask> addTask(String title, String assignee, int points, String time, String date, [String priority = 'media']) async {
     final result = await _post('add_task', {
       'title': title,
       'assignee': assignee,
       'points': points,
       'time': time,
       'due_date': date,
+      'priority': priority,
     });
     return HomeTask(
       id: result['id'].toString(),
@@ -119,6 +121,7 @@ class MySqlDbHelper {
       points: result['points'] as int,
       isCompleted: result['isCompleted'] as bool,
       date: result['date'] as String? ?? date,
+      priority: result['priority'] as String? ?? priority,
     );
   }
 
@@ -137,6 +140,7 @@ class MySqlDbHelper {
       'points': task.points,
       'time': task.time,
       'due_date': task.date,
+      'priority': task.priority,
     });
   }
 
@@ -227,6 +231,66 @@ class MySqlDbHelper {
         points: item['points'] as int,
         claimedAt: item['claimedAt'] as String,
       )).toList();
+    }
+    return [];
+  }
+
+  // --- WEATHER SYNC ---
+
+  static Future<Map<String, dynamic>> syncWeather({double? lat, double? lon}) async {
+    final params = <String, dynamic>{};
+    if (lat != null) params['latitude'] = lat;
+    if (lon != null) params['longitude'] = lon;
+
+    final result = await _post('sync_weather', params);
+    
+    final weather = result['weather'] as Map<String, dynamic>;
+    final taskListRaw = result['tasks'] as List;
+    final tasks = taskListRaw.map((item) => HomeTask(
+      id: item['id'].toString(),
+      title: item['title'] as String,
+      assignee: item['assignee'] as String,
+      time: item['time'] as String,
+      points: item['points'] as int,
+      isCompleted: item['isCompleted'] as bool,
+      date: item['date'] as String? ?? '2026-05-27',
+      priority: item['priority'] as String? ?? 'media',
+    )).toList();
+
+    return {
+      'weather': weather,
+      'tasks': tasks,
+    };
+  }
+
+  // --- FAMILY NOTIFICATIONS ---
+
+  static Future<bool> sendFamilyNotification(String title, String body) async {
+    try {
+      final result = await _post('send_family_notification', {
+        'title': title,
+        'body': body,
+      });
+      return result != null && result['success'] == true;
+    } catch (e) {
+      debugPrint('Error sending family notification: $e');
+      return false;
+    }
+  }
+
+  static Future<List<FamilyNotification>> getNotifications() async {
+    try {
+      final result = await _post('get_notifications');
+      if (result is List) {
+        return result.map((item) => FamilyNotification(
+          id: item['id'].toString(),
+          title: item['title'] as String? ?? '',
+          body: item['body'] as String? ?? '',
+          createdAt: item['created_at'] as String? ?? '',
+        )).toList();
+      }
+    } catch (e) {
+      debugPrint('Error loading notifications: $e');
     }
     return [];
   }

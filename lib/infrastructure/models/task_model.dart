@@ -8,6 +8,8 @@ class HomeTaskModel extends HomeTask {
     required super.time,
     required super.points,
     super.isCompleted,
+    super.date,
+    super.priority,
   });
 
   factory HomeTaskModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +20,8 @@ class HomeTaskModel extends HomeTask {
       time: json['time'] as String,
       points: json['points'] as int,
       isCompleted: json['isCompleted'] as bool? ?? false,
+      date: json['date'] as String? ?? '2026-05-27',
+      priority: json['priority'] as String? ?? 'media',
     );
   }
 
@@ -29,6 +33,8 @@ class HomeTaskModel extends HomeTask {
       'time': time,
       'points': points,
       'isCompleted': isCompleted,
+      'date': date,
+      'priority': priority,
     };
   }
 
@@ -40,6 +46,8 @@ class HomeTaskModel extends HomeTask {
       time: entity.time,
       points: entity.points,
       isCompleted: entity.isCompleted,
+      date: entity.date,
+      priority: entity.priority,
     );
   }
 }

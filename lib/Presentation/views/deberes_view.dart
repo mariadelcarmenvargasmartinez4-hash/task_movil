@@ -8,7 +8,7 @@ class DeberesView extends StatelessWidget {
   final ValueChanged<HomeTask> onTaskCompleted;
   final bool isParent;
   final String? childName;
-  final Function(String title, String assignee, int points, String time, String date)? onTaskAdded;
+  final Function(String title, String assignee, int points, String time, String date, String priority)? onTaskAdded;
   final ValueChanged<String>? onTaskDeleted;
   final ValueChanged<HomeTask>? onTaskUpdated;
   final List<String> familyMembers;
@@ -33,6 +33,7 @@ class DeberesView extends StatelessWidget {
     String assignee = assignees.contains('Carlos') ? 'Carlos' : assignees.first; // Default assignee option
     int points = 10; // Default points option
     String time = '8:00 PM'; // Default time option
+    String priority = 'media'; // Default priority
     DateTime selectedDate = DateTime(2026, 5, 27); // Default to calendar active month
 
     final pointOptions = [5, 10, 15, 20, 25];
@@ -127,6 +128,23 @@ class DeberesView extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
 
+                      // Priority Dropdown
+                      DropdownButtonFormField<String>(
+                        initialValue: priority,
+                        decoration: const InputDecoration(labelText: 'Prioridad'),
+                        items: const [
+                          DropdownMenuItem(value: 'alta', child: Text('Alta')),
+                          DropdownMenuItem(value: 'media', child: Text('Media')),
+                          DropdownMenuItem(value: 'baja', child: Text('Baja')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => priority = val);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
                       // Date Picker Field
                       Row(
                         children: [
@@ -172,7 +190,7 @@ class DeberesView extends StatelessWidget {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
                       final dateStr = "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
-                      onTaskAdded?.call(title, assignee, points, time, dateStr);
+                      onTaskAdded?.call(title, assignee, points, time, dateStr, priority);
                       Navigator.pop(context);
                     }
                   },
@@ -196,6 +214,7 @@ class DeberesView extends StatelessWidget {
     String assignee = task.assignee;
     int points = task.points;
     String time = task.time;
+    String priority = task.priority;
     DateTime selectedDate;
     try {
       selectedDate = DateTime.parse(task.date);
@@ -309,6 +328,23 @@ class DeberesView extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
 
+                      // Priority Dropdown
+                      DropdownButtonFormField<String>(
+                        initialValue: priority,
+                        decoration: const InputDecoration(labelText: 'Prioridad'),
+                        items: const [
+                          DropdownMenuItem(value: 'alta', child: Text('Alta')),
+                          DropdownMenuItem(value: 'media', child: Text('Media')),
+                          DropdownMenuItem(value: 'baja', child: Text('Baja')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() => priority = val);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
                       // Date Picker Field
                       Row(
                         children: [
@@ -360,6 +396,7 @@ class DeberesView extends StatelessWidget {
                         points: points,
                         time: time,
                         date: dateStr,
+                        priority: priority,
                       ));
                       Navigator.pop(context);
                     }
@@ -527,6 +564,8 @@ class DeberesView extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    _buildPriorityPill(task.priority),
                   ],
                 ),
               ],
@@ -569,6 +608,47 @@ class DeberesView extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPriorityPill(String priority) {
+    Color bgColor;
+    Color textColor;
+    String label;
+
+    switch (priority.toLowerCase()) {
+      case 'alta':
+        bgColor = const Color(0xFFFEE2E2);
+        textColor = const Color(0xFFEF4444);
+        label = 'Alta';
+        break;
+      case 'baja':
+        bgColor = const Color(0xFFDCFCE7);
+        textColor = const Color(0xFF22C55E);
+        label = 'Baja';
+        break;
+      case 'media':
+      default:
+        bgColor = const Color(0xFFF3F4F6);
+        textColor = const Color(0xFF6B7280);
+        label = 'Media';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -5,11 +5,13 @@ import 'glass_card.dart';
 class PointsHeader extends StatelessWidget {
   final int points;
   final VoidCallback? onLogout;
+  final VoidCallback? onNotificationsTap;
 
   const PointsHeader({
     super.key,
     required this.points,
     this.onLogout,
+    this.onNotificationsTap,
   });
 
   @override
@@ -63,7 +65,7 @@ class PointsHeader extends StatelessWidget {
             ),
           ),
           
-          // Points Pill & Logout Button Row
+          // Points Pill & Action Buttons Row
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -92,8 +94,19 @@ class PointsHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onNotificationsTap != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: onNotificationsTap,
+                  icon: const Icon(
+                    Icons.notifications,
+                    color: Colors.white,
+                  ),
+                  tooltip: 'Notificaciones Familiares',
+                ),
+              ],
               if (onLogout != null) ...[
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 IconButton(
                   onPressed: onLogout,
                   icon: const Icon(

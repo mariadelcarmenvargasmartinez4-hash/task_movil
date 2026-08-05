@@ -121,7 +121,7 @@ switch ($action) {
 
     case 'get_tasks':
         try {
-            $stmt = $db->query("SELECT id, title, assignee, time, points, is_completed, due_date FROM tasks");
+            $stmt = $db->query("SELECT id, title, assignee, time, points, is_completed, due_date, priority FROM tasks");
             $tasks = [];
             while ($row = $stmt->fetch()) {
                 $tasks[] = [
@@ -131,7 +131,8 @@ switch ($action) {
                     "time" => $row['time'],
                     "points" => (int)$row['points'],
                     "isCompleted" => (int)$row['is_completed'] === 1,
-                    "date" => $row['due_date']
+                    "date" => $row['due_date'],
+                    "priority" => isset($row['priority']) ? $row['priority'] : 'media'
                 ];
             }
             echo json_encode($tasks);
@@ -146,10 +147,11 @@ switch ($action) {
         $points = isset($data['points']) ? (int)$data['points'] : 10;
         $time = isset($data['time']) ? $data['time'] : '';
         $date = isset($data['due_date']) ? $data['due_date'] : '2026-05-27';
+        $priority = isset($data['priority']) ? $data['priority'] : 'media';
 
         try {
-            $stmt = $db->prepare("INSERT INTO tasks (title, assignee, time, points, is_completed, due_date) VALUES (?, ?, ?, ?, 0, ?)");
-            $stmt->execute([$title, $assignee, $time, $points, $date]);
+            $stmt = $db->prepare("INSERT INTO tasks (title, assignee, time, points, is_completed, due_date, priority) VALUES (?, ?, ?, ?, 0, ?, ?)");
+            $stmt->execute([$title, $assignee, $time, $points, $date, $priority]);
             $insertId = $db->lastInsertId();
             echo json_encode([
                 "id" => (string)$insertId,
@@ -158,7 +160,8 @@ switch ($action) {
                 "time" => $time,
                 "points" => $points,
                 "isCompleted" => false,
-                "date" => $date
+                "date" => $date,
+                "priority" => $priority
             ]);
         } catch (Exception $e) {
             echo json_encode(["error" => $e->getMessage()]);
@@ -185,10 +188,11 @@ switch ($action) {
         $points = isset($data['points']) ? (int)$data['points'] : 10;
         $time = isset($data['time']) ? $data['time'] : '';
         $date = isset($data['due_date']) ? $data['due_date'] : '2026-05-27';
+        $priority = isset($data['priority']) ? $data['priority'] : 'media';
 
         try {
-            $stmt = $db->prepare("UPDATE tasks SET title = ?, assignee = ?, points = ?, time = ?, due_date = ? WHERE id = ?");
-            $stmt->execute([$title, $assignee, $points, $time, $date, $id]);
+            $stmt = $db->prepare("UPDATE tasks SET title = ?, assignee = ?, points = ?, time = ?, due_date = ?, priority = ? WHERE id = ?");
+            $stmt->execute([$title, $assignee, $points, $time, $date, $priority, $id]);
             echo json_encode(["success" => true]);
         } catch (Exception $e) {
             echo json_encode(["error" => $e->getMessage()]);
@@ -325,7 +329,254 @@ switch ($action) {
         }
         break;
 
+    case 'sync_weather':
+        $lat = isset($data['latitude']) ? floatval($data['latitude']) : 19.4326;
+        $lon = isset($data['longitude']) ? floatval($data['longitude']) : -99.1332;
+
+        try {
+            $weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}&current_weather=true";
+            $ctx = stream_context_create(['http' => ['timeout' => 3]]);
+            $response = @file_get_contents($weatherUrl, false, $ctx);
+            
+            $isRaining = false;
+            $temp = 20;
+            $weatherCode = 0;
+
+            if ($response) {
+                $weatherData = json_decode($response, true);
+                if (isset($weatherData['current_weather'])) {
+                    $curr = $weatherData['current_weather'];
+                    $temp = $curr['temperature'];
+                    $weatherCode = intval($curr['weathercode']);
+                    
+                    $rainCodes = [51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 99];
+                    if (in_array($weatherCode, $rainCodes)) {
+                        $isRaining = true;
+                    }
+                }
+            }
+
+            $weatherDesc = "Despejado";
+            $weatherEmoji = "☀️";
+            if ($isRaining) {
+                $weatherDesc = "Lluvioso";
+                $weatherEmoji = "🌧️";
+            } elseif ($weatherCode >= 1 && $weatherCode <= 3) {
+                $weatherDesc = "Parcialmente Nublado";
+                $weatherEmoji = "⛅";
+            }
+
+            $stmt = $db->query("SELECT id, title, assignee, time, points, is_completed, due_date FROM tasks");
+            $tasks = $stmt->fetchAll();
+
+            $outdoorKeywords = ['regar', 'plantas', 'perro', 'jardin', 'basura', 'patio', 'exterior', 'dog', 'trash', 'garden', 'lawn'];
+            $indoorKeywords = ['limpiar', 'cocina', 'platos', 'lavar', 'aspirar', 'ordenar', 'organizar', 'pieza', 'cuarto', 'ropa'];
+
+            $updatedTasks = [];
+            foreach ($tasks as $task) {
+                $titleLower = strtolower($task['title']);
+                $newPriority = 'media';
+
+                $isOutdoor = false;
+                foreach ($outdoorKeywords as $kw) {
+                    if (strpos($titleLower, $kw) !== false) {
+                        $isOutdoor = true;
+                        break;
+                    }
+                }
+
+                $isIndoor = false;
+                if (!$isOutdoor) {
+                    foreach ($indoorKeywords as $kw) {
+                        if (strpos($titleLower, $kw) !== false) {
+                            $isIndoor = true;
+                            break;
+                        }
+                    }
+                }
+
+                if ($isOutdoor) {
+                    $newPriority = $isRaining ? 'baja' : 'alta';
+                } elseif ($isIndoor) {
+                    $newPriority = $isRaining ? 'alta' : 'media';
+                } else {
+                    $newPriority = 'media';
+                }
+
+                $updateStmt = $db->prepare("UPDATE tasks SET priority = ? WHERE id = ?");
+                $updateStmt->execute([$newPriority, $task['id']]);
+
+                $updatedTasks[] = [
+                    "id" => (string)$task['id'],
+                    "title" => $task['title'],
+                    "assignee" => $task['assignee'],
+                    "time" => $task['time'],
+                    "points" => (int)$task['points'],
+                    "isCompleted" => (int)$task['is_completed'] === 1,
+                    "date" => $task['due_date'],
+                    "priority" => $newPriority
+                ];
+            }
+
+            echo json_encode([
+                "success" => true,
+                "weather" => [
+                    "temp" => $temp,
+                    "code" => $weatherCode,
+                    "description" => $weatherDesc,
+                    "emoji" => $weatherEmoji,
+                    "isRaining" => $isRaining
+                ],
+                "tasks" => $updatedTasks
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'send_family_notification':
+        $title = isset($data['title']) ? trim($data['title']) : '';
+        $body = isset($data['body']) ? trim($data['body']) : '';
+
+        if (empty($title) || empty($body)) {
+            echo json_encode(["error" => "Parametros de notificacion incompletos"]);
+            break;
+        }
+
+        try {
+            $stmt = $db->prepare("INSERT INTO notifications (title, body) VALUES (?, ?)");
+            $stmt->execute([$title, $body]);
+            $notifId = $db->lastInsertId();
+
+            $logMsg = "[" . date('Y-m-d H:i:s') . "] NOTIFICATION: {$title} - {$body}\n";
+            @file_put_contents(__DIR__ . '/notifications.log', $logMsg, FILE_APPEND);
+
+            $firebaseStatus = "No configurado (archivo service_account.json ausente)";
+            $saPath = __DIR__ . '/service_account.json';
+            
+            if (file_exists($saPath)) {
+                $sa = json_decode(file_get_contents($saPath), true);
+                if ($sa && isset($sa['project_id'])) {
+                    $projectId = $sa['project_id'];
+                    $jwtToken = helper_generate_fcm_token($sa);
+                    if ($jwtToken) {
+                        $fcmUrl = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+                        $payload = [
+                            "message" => [
+                                "topic" => "family",
+                                "notification" => [
+                                    "title" => $title,
+                                    "body" => $body
+                                ],
+                                "data" => [
+                                    "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+                                ]
+                            ]
+                        ];
+
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $fcmUrl);
+                        curl_setopt($ch, CURLOPT_POST, true);
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                            "Authorization: Bearer {$jwtToken}",
+                            "Content-Type: application/json"
+                        ]);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                        $fcmResponse = curl_exec($ch);
+                        curl_close($ch);
+                        
+                        if ($fcmResponse) {
+                            $firebaseStatus = "Enviado con exito a Firebase. Respuesta: " . $fcmResponse;
+                        } else {
+                            $firebaseStatus = "Fallo al enviar a Firebase (CURL error)";
+                        }
+                    } else {
+                        $firebaseStatus = "Error generando token OAuth2 de Firebase (revisa formato de JWT)";
+                    }
+                } else {
+                    $firebaseStatus = "Formato de archivo service_account.json incorrecto";
+                }
+            }
+
+            echo json_encode([
+                "success" => true,
+                "id" => $notifId,
+                "title" => $title,
+                "body" => $body,
+                "firebase_status" => $firebaseStatus
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
+    case 'get_notifications':
+        try {
+            $stmt = $db->query("SELECT id, title, body, created_at FROM notifications ORDER BY id DESC LIMIT 50");
+            $notifs = $stmt->fetchAll();
+            echo json_encode($notifs);
+        } catch (Exception $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
+        break;
+
     default:
         echo json_encode(["error" => "Accion no valida: " . $action]);
         break;
+}
+
+function helper_generate_fcm_token($sa) {
+    if (!isset($sa['private_key']) || !isset($sa['client_email']) || !isset($sa['token_uri'])) {
+        return null;
+    }
+
+    $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
+    $now = time();
+    $payload = json_encode([
+        'iss' => $sa['client_email'],
+        'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+        'aud' => $sa['token_uri'],
+        'exp' => $now + 3600,
+        'iat' => $now
+    ]);
+
+    $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+    $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+
+    $signature = '';
+    $success = openssl_sign(
+        $base64UrlHeader . "." . $base64UrlPayload,
+        $signature,
+        $sa['private_key'],
+        'SHA256'
+    );
+
+    if (!$success) {
+        return null;
+    }
+
+    $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+    $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $sa['token_uri']);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        'assertion' => $jwt
+    ]));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    $res = curl_exec($ch);
+    curl_close($ch);
+
+    if ($res) {
+        $resData = json_decode($res, true);
+        if (isset($resData['access_token'])) {
+            return $resData['access_token'];
+        }
+    }
+    return null;
 }
