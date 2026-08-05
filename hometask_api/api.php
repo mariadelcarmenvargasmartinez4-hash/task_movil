@@ -553,9 +553,10 @@ switch ($action) {
         }
 
         try {
+            $now = date('Y-m-d H:i:s');
             $stmt = $db->prepare("SELECT device_id FROM smartwatch_pairing 
-                                  WHERE pin_code = ? AND expires_at > NOW() AND username IS NULL");
-            $stmt->execute([$pin]);
+                                  WHERE pin_code = ? AND expires_at > ? AND username IS NULL");
+            $stmt->execute([$pin, $now]);
             $row = $stmt->fetch();
 
             if ($row) {
@@ -579,8 +580,9 @@ switch ($action) {
         }
 
         try {
-            $stmt = $db->prepare("SELECT username FROM smartwatch_pairing WHERE device_id = ? AND expires_at > NOW()");
-            $stmt->execute([$deviceId]);
+            $now = date('Y-m-d H:i:s');
+            $stmt = $db->prepare("SELECT username FROM smartwatch_pairing WHERE device_id = ? AND expires_at > ?");
+            $stmt->execute([$deviceId, $now]);
             $row = $stmt->fetch();
 
             if ($row && !empty($row['username'])) {
