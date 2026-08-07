@@ -131,8 +131,10 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.glassCyan,
-                foregroundColor: Colors.white,
+                backgroundColor: AppTheme.neoBackground,
+                foregroundColor: AppTheme.accent,
+                shadowColor: AppTheme.neoShadowDark,
+                elevation: 4,
               ),
               child: const Text('Crear'),
             ),
@@ -197,11 +199,11 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Crear Premio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.glassCyan,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppTheme.neoBackground,
+                    foregroundColor: AppTheme.accent,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     elevation: 4,
-                    shadowColor: AppTheme.glassCyan.withValues(alpha: 0.4),
+                    shadowColor: AppTheme.neoShadowDark.withValues(alpha: 0.4),
                   ),
                 ),
             ],
@@ -214,14 +216,11 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
             builder: (context, child) {
               return Container(
                 decoration: BoxDecoration(
-                  gradient: AppTheme.backgroundGradient2,
+                  color: AppTheme.neoBackground,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.glassPurple.withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    )
+                  boxShadow: const [
+                    BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
+                    BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
                   ],
                 ),
                 padding: const EdgeInsets.all(20.0),
@@ -230,10 +229,14 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.neoBackground,
                         shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
+                          BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
+                        ],
                       ),
-                      child: const Icon(Icons.stars_rounded, color: Colors.white, size: 36),
+                      child: const Icon(Icons.stars_rounded, color: AppTheme.warning, size: 36),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -242,9 +245,9 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                         children: [
                           Text(
                             widget.isParent ? 'Saldo del Hogar' : 'Tus Puntos Disponibles',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 13, 
-                              color: Colors.white.withValues(alpha: 0.9), 
+                              color: AppTheme.textMuted, 
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -254,7 +257,7 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                             style: const TextStyle(
                               fontSize: 32, 
                               fontWeight: FontWeight.w900, 
-                              color: Colors.white,
+                              color: AppTheme.accent,
                               letterSpacing: -1,
                             ),
                           ),
@@ -303,15 +306,11 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
 
                 return Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.cardGlass,
+                    color: AppTheme.neoBackground,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppTheme.borderGlass),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      )
+                    boxShadow: const [
+                      BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
+                      BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
                     ],
                   ),
                   child: Padding(
@@ -324,18 +323,13 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                           height: 56,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: canClaim ? AppTheme.backgroundGradient1 : LinearGradient(
-                              colors: [Colors.grey.shade300.withValues(alpha: 0.5), Colors.grey.shade400.withValues(alpha: 0.5)],
-                            ),
-                            boxShadow: canClaim ? [
-                              BoxShadow(
-                                color: AppTheme.glassCyan.withValues(alpha: 0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              )
+                            color: AppTheme.neoBackground,
+                            boxShadow: canClaim ? const [
+                              BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
+                              BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
                             ] : [],
                           ),
-                          child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 28),
+                          child: Icon(Icons.card_giftcard_rounded, color: canClaim ? AppTheme.accent : AppTheme.textMuted, size: 28),
                         ),
                         const SizedBox(width: 16),
 
@@ -349,7 +343,7 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
-                                  color: canClaim ? AppTheme.textLight : AppTheme.textMuted,
+                                  color: canClaim ? AppTheme.textDark : AppTheme.textMuted,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -361,9 +355,9 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                                       child: LinearProgressIndicator(
                                         value: progress,
                                         minHeight: 8,
-                                        backgroundColor: Colors.white24,
+                                        backgroundColor: AppTheme.neoShadowDark.withValues(alpha: 0.2),
                                         valueColor: AlwaysStoppedAnimation<Color>(
-                                          canClaim ? AppTheme.success : AppTheme.glassCyan,
+                                          canClaim ? AppTheme.success : AppTheme.accent,
                                         ),
                                       ),
                                     ),
@@ -374,7 +368,7 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: canClaim ? AppTheme.success : AppTheme.glassCyan,
+                                      color: canClaim ? AppTheme.success : AppTheme.accent,
                                     ),
                                   ),
                                 ],

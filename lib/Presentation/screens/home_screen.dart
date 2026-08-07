@@ -855,12 +855,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final int activeIndex = widget.pageIndex > maxIndex ? maxIndex : widget.pageIndex;
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppTheme.backgroundGradient1,
-      ),
+      color: AppTheme.neoBackground,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        extendBody: true, // Allow body to flow under the transparent bottom nav
+        extendBody: true,
         body: Column(
           children: [
           // Dynamic Points Header with dynamic logout button
@@ -876,11 +874,12 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppTheme.glassCyan.withValues(alpha: 0.05),
+                  color: AppTheme.neoBackground,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppTheme.glassCyan.withValues(alpha: 0.1),
-                  ),
+                  boxShadow: const [
+                    BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
+                    BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -938,13 +937,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.cardGlass,
-          border: const Border(top: BorderSide(color: AppTheme.borderGlass, width: 1)),
+        decoration: const BoxDecoration(
+          color: AppTheme.neoBackground,
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.neoShadowDark,
+              blurRadius: 20,
+              offset: Offset(0, -10),
+            ),
+            BoxShadow(
+              color: AppTheme.neoShadowLight,
+              blurRadius: 20,
+              offset: Offset(0, 10), // inner glow sort of
+            ),
+          ],
         ),
         child: NavigationBarTheme(
           data: NavigationBarThemeData(
-            indicatorColor: AppTheme.glassCyan.withValues(alpha: 0.3),
+            indicatorColor: AppTheme.neoShadowDark.withValues(alpha: 0.2),
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
                 return const TextStyle(

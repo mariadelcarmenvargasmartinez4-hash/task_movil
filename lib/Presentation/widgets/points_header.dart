@@ -57,18 +57,18 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
         right: 24,
       ),
       decoration: BoxDecoration(
-        color: AppTheme.cardGlass, // Make the whole header a glass panel
+        color: AppTheme.neoBackground, 
         borderRadius: const BorderRadius.vertical(
           bottom: Radius.circular(40),
         ),
         border: const Border(
-          bottom: BorderSide(color: AppTheme.borderGlass, width: 1.5),
+          bottom: BorderSide(color: AppTheme.neoShadowLight, width: 2),
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
+            color: AppTheme.neoShadowDark,
+            blurRadius: 20,
+            offset: Offset(0, 10),
           ),
         ],
       ),
@@ -105,7 +105,7 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
                     Text(
                       'Ecosistema Familiar Activo',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: AppTheme.textMuted,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.2,
@@ -125,8 +125,7 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
                       blur: 12,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       borderRadius: 24,
-                      backgroundColor: Colors.white.withValues(alpha: 0.25),
-                      borderColor: Colors.white.withValues(alpha: 0.4),
+                      backgroundColor: AppTheme.neoBackground,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -138,7 +137,7 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
                           Text(
                             '${widget.points} pts',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppTheme.accent,
                               fontWeight: FontWeight.w900,
                               fontSize: 15,
                             ),
@@ -199,15 +198,27 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
 
   Widget _buildIconButton({required IconData icon, required VoidCallback onPressed, required String tooltip}) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+      decoration: const BoxDecoration(
+        color: AppTheme.neoBackground,
         shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.neoShadowDark,
+            blurRadius: 10,
+            offset: Offset(4, 4),
+          ),
+          BoxShadow(
+            color: AppTheme.neoShadowLight,
+            blurRadius: 10,
+            offset: Offset(-4, -4),
+          ),
+        ],
       ),
       child: IconButton(
         onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white, size: 22),
+        icon: Icon(icon, color: AppTheme.textDark, size: 22),
         tooltip: tooltip,
-        splashColor: Colors.white.withValues(alpha: 0.3),
+        splashColor: AppTheme.neoShadowDark.withValues(alpha: 0.3),
         highlightColor: Colors.transparent,
       ),
     );

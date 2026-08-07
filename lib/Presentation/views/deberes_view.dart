@@ -443,13 +443,13 @@ class DeberesView extends StatelessWidget {
               if (isParent)
                 TextButton.icon(
                   onPressed: () => _showAddTaskDialog(context),
-                  icon: const Icon(Icons.add, size: 16, color: AppTheme.glassCyan),
+                  icon: const Icon(Icons.add, size: 16, color: AppTheme.accent),
                   label: const Text(
                     'Crear Tarea',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.glassCyan,
+                      color: AppTheme.accent,
                     ),
                   ),
                 ),
@@ -490,12 +490,10 @@ class DeberesView extends StatelessWidget {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       borderRadius: 20,
-      backgroundColor: Colors.transparent, // Default to app theme in GlassCard
-      shadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.02),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
+      backgroundColor: AppTheme.neoBackground,
+      shadow: const [
+        BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
+        BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
         )
       ],
       child: Row(
@@ -509,10 +507,14 @@ class DeberesView extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppTheme.borderGlass,
+                  color: AppTheme.neoBackground,
                   width: 2,
                 ),
-                color: Colors.transparent,
+                color: AppTheme.neoBackground,
+                boxShadow: const [
+                  BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
+                  BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
+                ],
               ),
             ),
           ),
@@ -529,7 +531,7 @@ class DeberesView extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textLight,
+                    color: AppTheme.textDark,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -581,7 +583,7 @@ class DeberesView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.glassCyan,
+                  color: AppTheme.accent,
                 ),
               ),
               if (isParent) ...[
@@ -590,7 +592,7 @@ class DeberesView extends StatelessWidget {
                   onPressed: () => _showEditTaskDialog(context, task),
                   icon: const Icon(
                     Icons.edit_outlined,
-                    color: AppTheme.glassCyan,
+                    color: AppTheme.accent,
                     size: 18,
                   ),
                   visualDensity: VisualDensity.compact,

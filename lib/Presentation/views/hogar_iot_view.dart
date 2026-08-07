@@ -62,48 +62,48 @@ class _SmartDeviceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String iconEmoji = '💡';
-    Color activeColor = AppTheme.glassCyan;
+    Color activeColor = AppTheme.accent;
     
     if (device.type == 'thermostat') {
       iconEmoji = '🌡️';
       activeColor = AppTheme.warning;
     } else if (device.type == 'tv') {
       iconEmoji = '📺';
-      activeColor = AppTheme.glassPurple;
+      activeColor = AppTheme.accent;
     } else {
-      activeColor = AppTheme.glassCyan;
+      activeColor = AppTheme.accent;
     }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: device.isOn 
-            ? LinearGradient(
-                colors: [activeColor.withValues(alpha: 0.15), activeColor.withValues(alpha: 0.05)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
-        color: device.isOn ? AppTheme.cardGlass.withValues(alpha: 0.3) : AppTheme.cardGlass,
+        color: AppTheme.neoBackground,
         boxShadow: [
-          if (device.isOn)
+          if (device.isOn) ...[
             BoxShadow(
               color: activeColor.withValues(alpha: 0.3),
               blurRadius: 16,
               spreadRadius: 2,
-            )
-          else
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+            ),
+            const BoxShadow(
+              color: AppTheme.neoShadowLight,
               blurRadius: 12,
-              offset: const Offset(0, 4),
-            )
+              offset: Offset(-4, -4),
+            ),
+          ] else ...[
+            const BoxShadow(
+              color: AppTheme.neoShadowDark,
+              blurRadius: 12,
+              offset: Offset(4, 4),
+            ),
+            const BoxShadow(
+              color: AppTheme.neoShadowLight,
+              blurRadius: 12,
+              offset: Offset(-4, -4),
+            ),
+          ]
         ],
-        border: Border.all(
-          color: device.isOn ? activeColor.withValues(alpha: 0.5) : AppTheme.borderGlass,
-          width: 1.5,
-        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -151,7 +151,7 @@ class _SmartDeviceCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: device.isOn ? AppTheme.textLight : AppTheme.textMuted,
+                        color: device.isOn ? AppTheme.textDark : AppTheme.textMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
