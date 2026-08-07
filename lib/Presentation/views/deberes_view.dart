@@ -434,22 +434,22 @@ class DeberesView extends StatelessWidget {
               Text(
                 isParent ? 'LISTA DE DEBERES' : 'MIS DEBERES PENDIENTES',
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.textMuted,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.textDark,
                   letterSpacing: 0.8,
                 ),
               ),
               if (isParent)
                 TextButton.icon(
                   onPressed: () => _showAddTaskDialog(context),
-                  icon: const Icon(Icons.add, size: 16, color: AppTheme.accent),
+                  icon: const Icon(Icons.add_box_rounded, size: 20, color: AppTheme.accentPrimary),
                   label: const Text(
-                    'Crear Tarea',
+                    'NUEVA TAREA',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.accent,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.accentPrimary,
                     ),
                   ),
                 ),
@@ -490,10 +490,9 @@ class DeberesView extends StatelessWidget {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       borderRadius: 20,
-      backgroundColor: AppTheme.neoBackground,
+      backgroundColor: Colors.white,
       shadow: const [
-        BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
-        BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
+        BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(4, 6)),
         )
       ],
       child: Row(
@@ -507,13 +506,12 @@ class DeberesView extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppTheme.neoBackground,
-                  width: 2,
+                  color: AppTheme.gameBorder,
+                  width: 3,
                 ),
-                color: AppTheme.neoBackground,
+                color: Colors.white,
                 boxShadow: const [
-                  BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
-                  BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
+                  BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(2, 2)),
                 ],
               ),
             ),
@@ -581,9 +579,9 @@ class DeberesView extends StatelessWidget {
               Text(
                 '+${task.points} pts',
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.accent,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.accentPrimary,
                 ),
               ),
               if (isParent) ...[
@@ -592,8 +590,8 @@ class DeberesView extends StatelessWidget {
                   onPressed: () => _showEditTaskDialog(context, task),
                   icon: const Icon(
                     Icons.edit_outlined,
-                    color: AppTheme.accent,
-                    size: 18,
+                    color: AppTheme.accentSecondary,
+                    size: 22,
                   ),
                   visualDensity: VisualDensity.compact,
                 ),

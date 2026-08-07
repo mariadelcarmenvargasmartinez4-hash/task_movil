@@ -56,19 +56,19 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
         left: 24,
         right: 24,
       ),
-      decoration: BoxDecoration(
-        color: AppTheme.neoBackground, 
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(40),
+      decoration: const BoxDecoration(
+        color: AppTheme.accentTertiary, // Yellow background for header
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(30),
         ),
-        border: const Border(
-          bottom: BorderSide(color: AppTheme.neoShadowLight, width: 2),
+        border: Border(
+          bottom: BorderSide(color: AppTheme.gameBorder, width: 4),
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: AppTheme.neoShadowDark,
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            color: AppTheme.gameBorder,
+            blurRadius: 0,
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -103,12 +103,12 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Ecosistema Familiar Activo',
+                      'Nivel Familiar',
                       style: TextStyle(
-                        color: AppTheme.textMuted,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.2,
+                        color: AppTheme.textDark,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
@@ -121,25 +121,27 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
                 children: [
                   ScaleTransition(
                     scale: _pulseAnimation,
-                    child: GlassCard(
-                      blur: 12,
+                    child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      borderRadius: 24,
-                      backgroundColor: AppTheme.neoBackground,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppTheme.gameBorder, width: 3),
+                        boxShadow: const [
+                          BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(2, 4))
+                        ],
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            '🏆',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          const SizedBox(width: 8),
+                          const Icon(Icons.star_rounded, color: AppTheme.warning, size: 24),
+                          const SizedBox(width: 6),
                           Text(
-                            '${widget.points} pts',
+                            '${widget.points} XP',
                             style: const TextStyle(
-                              color: AppTheme.accent,
+                              color: AppTheme.textDark,
                               fontWeight: FontWeight.w900,
-                              fontSize: 15,
+                              fontSize: 16,
                             ),
                           ),
                         ],
@@ -198,19 +200,15 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
 
   Widget _buildIconButton({required IconData icon, required VoidCallback onPressed, required String tooltip}) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.neoBackground,
+      decoration: BoxDecoration(
+        color: Colors.white,
         shape: BoxShape.circle,
-        boxShadow: [
+        border: Border.all(color: AppTheme.gameBorder, width: 3),
+        boxShadow: const [
           BoxShadow(
-            color: AppTheme.neoShadowDark,
-            blurRadius: 10,
-            offset: Offset(4, 4),
-          ),
-          BoxShadow(
-            color: AppTheme.neoShadowLight,
-            blurRadius: 10,
-            offset: Offset(-4, -4),
+            color: AppTheme.gameBorder,
+            blurRadius: 0,
+            offset: Offset(2, 4),
           ),
         ],
       ),
@@ -218,7 +216,7 @@ class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderSt
         onPressed: onPressed,
         icon: Icon(icon, color: AppTheme.textDark, size: 22),
         tooltip: tooltip,
-        splashColor: AppTheme.neoShadowDark.withValues(alpha: 0.3),
+        splashColor: AppTheme.accentTertiary.withValues(alpha: 0.5),
         highlightColor: Colors.transparent,
       ),
     );
