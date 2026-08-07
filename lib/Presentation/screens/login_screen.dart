@@ -127,12 +127,24 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppTheme.headerGradient,
-        ),
+      body: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        duration: const Duration(seconds: 20),
+        builder: (context, value, child) {
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: const [AppTheme.glassCyan, AppTheme.glassPurple, AppTheme.deepNavy],
+                stops: const [0.0, 0.5, 1.0],
+                begin: Alignment(value - 1, value - 1),
+                end: Alignment(1 - value, 1 - value),
+              ),
+            ),
+            child: child,
+          );
+        },
         child: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -145,16 +157,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   Column(
                     children: [
                       const SizedBox(height: 16),
-                      const Text(
-                        '🏆',
-                        style: TextStyle(fontSize: 64),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              blurRadius: 24,
+                              spreadRadius: 4,
+                            )
+                          ]
+                        ),
+                        child: const Text(
+                          '🏆',
+                          style: TextStyle(fontSize: 64),
+                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Text(
                         'HomeTask Smart',
                         style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                              fontSize: 32,
-                              letterSpacing: -1.0,
+                              fontSize: 34,
+                              letterSpacing: -1.2,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
                             ),
                       ),
                       const SizedBox(height: 8),
@@ -162,21 +195,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Gestión Colaborativa del Hogar',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Login/Register Card
                   GlassCard(
-                    blur: 20,
+                    blur: 24,
                     borderRadius: 32,
-                    backgroundColor: Colors.white.withValues(alpha: 0.85),
-                    padding: const EdgeInsets.all(24.0),
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    borderColor: Colors.white.withValues(alpha: 0.3),
+                    padding: const EdgeInsets.all(28.0),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -186,9 +221,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             _isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión',
                             style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -196,31 +231,26 @@ class _LoginScreenState extends State<LoginScreen> {
                             _isRegisterMode 
                                 ? 'Regístrate y selecciona tu rol familiar.' 
                                 : 'Ingresa tus credenciales para continuar.',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textMuted,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
                           // Name Field (Only in Register Mode)
                           if (_isRegisterMode) ...[
-                            TextFormField(
-                              decoration: InputDecoration(
-                                labelText: 'Nombre Completo',
-                                hintText: 'ej. Carlos',
-                                prefixIcon: const Icon(Icons.person_outline),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
+                            _buildTextField(
+                              label: 'Nombre Completo',
+                              hint: 'ej. Carlos',
+                              icon: Icons.person_outline_rounded,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Por favor ingresa tu nombre';
                                 }
                                 final lettersOnlyRegex = RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+$');
                                 if (!lettersOnlyRegex.hasMatch(value.trim())) {
-                                  return 'El nombre solo debe contener letras (sin espacios ni signos)';
+                                  return 'Solo letras (sin espacios ni signos)';
                                 }
                                 return null;
                               },
@@ -230,23 +260,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
 
                           // Username Field (Email Address)
-                          TextFormField(
+                          _buildTextField(
+                            label: 'Correo Electrónico',
+                            hint: 'ejemplo@correo.com',
+                            icon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              labelText: 'Correo Electrónico',
-                              hintText: 'ejemplo@correo.com',
-                              prefixIcon: const Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Por favor ingresa tu correo';
                               }
                               final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                               if (!emailRegex.hasMatch(value.trim())) {
-                                return 'Ingresa un correo electrónico válido';
+                                return 'Ingresa un correo válido';
                               }
                               return null;
                             },
@@ -255,81 +280,78 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 16),
 
                           // Password Field (Strict Validations)
-                          TextFormField(
+                          _buildTextField(
+                            label: 'Contraseña',
+                            hint: 'Tu contraseña secreta',
+                            icon: Icons.lock_outline_rounded,
                             obscureText: true,
-                            decoration: InputDecoration(
-                              labelText: 'Contraseña',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Por favor ingresa tu contraseña';
                               }
                               if (value.length < 8 || value.length > 20) {
-                                return 'La contraseña debe tener entre 8 y 20 caracteres';
+                                return 'Debe tener entre 8 y 20 caracteres';
                               }
                               if (value.contains(' ')) {
-                                return 'La contraseña no debe contener espacios';
+                                return 'No debe contener espacios';
                               }
                               if (!value.contains(RegExp(r'[A-Z]'))) {
-                                return 'Debe contener al menos una letra mayúscula';
+                                return 'Al menos una mayúscula';
                               }
                               if (!value.contains(RegExp(r'[a-z]'))) {
-                                return 'Debe contener al menos una letra minúscula';
+                                return 'Al menos una minúscula';
                               }
                               if (!value.contains(RegExp(r'[0-9]'))) {
-                                return 'Debe contener al menos un número';
+                                return 'Al menos un número';
                               }
                               if (!value.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) {
-                                return 'Debe contener al menos un carácter especial (ej. !, @, #)';
+                                return 'Al menos un carácter especial';
                               }
                               return null;
                             },
                             onSaved: (value) => _password = value!,
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
                           // Role Selector (Only in Register Mode)
                           if (_isRegisterMode) ...[
-                            const Text(
+                            Text(
                               'Selecciona tu Rol',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.textDark,
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             _buildRoleOption(
                               role: 'padre',
                               title: 'Papá / Mamá',
-                              icon: Icons.supervisor_account,
+                              icon: Icons.supervisor_account_rounded,
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 10),
                             _buildRoleOption(
                               role: 'hijo',
                               title: 'Hijo / Hija',
-                              icon: Icons.child_care,
+                              icon: Icons.child_care_rounded,
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
                           ],
 
                           // Submit Button
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
+                            height: 56,
                             child: ElevatedButton(
                               onPressed: _submit,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.electricBlue,
-                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppTheme.glassCyan,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                elevation: 0,
+                                elevation: 8,
+                                shadowColor: Colors.black.withValues(alpha: 0.2),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -338,16 +360,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _isRegisterMode ? 'Registrarse' : 'Ingresar',
                                     style: const TextStyle(
                                       fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Icon(Icons.arrow_forward, size: 18),
+                                  const Icon(Icons.arrow_forward_rounded, size: 20),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
                           // Mode Switcher Link
                           Center(
@@ -358,14 +381,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _formKey.currentState?.reset();
                                 });
                               },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                              ),
                               child: Text(
                                 _isRegisterMode
                                     ? '¿Ya tienes cuenta? Inicia Sesión'
                                     : '¿No tienes cuenta? Regístrate',
                                 style: const TextStyle(
-                                  color: AppTheme.electricBlue,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                  fontSize: 14,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.white,
                                 ),
                               ),
                             ),
@@ -374,15 +401,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Footer
-                  Text(
-                    'Sincronizado en tiempo real',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_done_rounded, color: Colors.white70, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Sincronizado en tiempo real',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -390,6 +425,50 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    required String? Function(String?) validator,
+    required void Function(String?) onSaved,
+  }) {
+    return TextFormField(
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
+        prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.7)),
+        filled: true,
+        fillColor: Colors.black.withValues(alpha: 0.1),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.white, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppTheme.danger, width: 1.5),
+        ),
+        errorStyle: const TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold),
+      ),
+      validator: validator,
+      onSaved: onSaved,
     );
   }
 
@@ -408,31 +487,34 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.electricBlue : Colors.black.withValues(alpha: 0.08),
+            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.2),
             width: 2,
           ),
-          color: isSelected ? AppTheme.electricBlue.withValues(alpha: 0.05) : Colors.transparent,
+          color: isSelected ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.05),
         ),
         child: Row(
           children: [
             Icon(
               icon,
-              color: isSelected ? AppTheme.electricBlue : AppTheme.textMuted,
-              size: 20,
+              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.6),
+              size: 24,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textDark,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.8),
               ),
             ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
           ],
         ),
       ),

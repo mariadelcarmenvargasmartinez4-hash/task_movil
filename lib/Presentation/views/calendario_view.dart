@@ -81,7 +81,7 @@ class _CalendarioViewState extends State<CalendarioView> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.textDark,
+                    color: AppTheme.textLight,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -129,7 +129,7 @@ class _CalendarioViewState extends State<CalendarioView> {
                         height: 32,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: isSelected ? AppTheme.electricBlue : Colors.transparent,
+                          color: isSelected ? AppTheme.glassCyan : Colors.transparent,
                         ),
                         alignment: Alignment.center,
                         child: Column(
@@ -141,7 +141,7 @@ class _CalendarioViewState extends State<CalendarioView> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                color: isSelected ? Colors.white : AppTheme.textDark,
+                                color: isSelected ? Colors.white : AppTheme.textLight,
                               ),
                             ),
                             // Small indicator dot if there are tasks on this day
@@ -152,7 +152,7 @@ class _CalendarioViewState extends State<CalendarioView> {
                                 height: 4,
                                 decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppTheme.electricBlue,
+                                  color: AppTheme.glassCyan,
                                 ),
                               ),
                           ],
@@ -227,7 +227,7 @@ class _CalendarioViewState extends State<CalendarioView> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.textDark,
+                                color: AppTheme.textLight,
                                 decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                               ),
                             ),
@@ -259,7 +259,7 @@ class _CalendarioViewState extends State<CalendarioView> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: task.isCompleted ? AppTheme.green : AppTheme.electricBlue,
+                          color: task.isCompleted ? AppTheme.green : AppTheme.glassCyan,
                         ),
                       ),
                     ],

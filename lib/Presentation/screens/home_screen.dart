@@ -234,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('🌤️ Clima del Hogar: ${_currentWeather?["description"]} (${_currentWeather?["temp"]}°C). Prioridades recalculadas!'),
-            backgroundColor: AppTheme.electricBlue,
+            backgroundColor: AppTheme.glassCyan,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -275,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const SizedBox(
                 height: 300,
-                child: Center(child: CircularProgressIndicator(color: AppTheme.electricBlue)),
+                child: Center(child: CircularProgressIndicator(color: AppTheme.glassCyan)),
               );
             }
             if (snapshot.hasError) {
@@ -299,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.textDark,
+                          color: AppTheme.textLight,
                         ),
                       ),
                       IconButton(
@@ -330,18 +330,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: CircleAvatar(
-                              backgroundColor: AppTheme.electricBlue.withValues(alpha: 0.1),
-                              child: const Icon(Icons.notifications_active, color: AppTheme.electricBlue),
+                              backgroundColor: AppTheme.glassCyan.withValues(alpha: 0.1),
+                              child: const Icon(Icons.notifications_active, color: AppTheme.glassCyan),
                             ),
                             title: Text(
                               notif.title,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textDark),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textLight),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const SizedBox(height: 4),
-                                Text(notif.body, style: const TextStyle(fontSize: 13, color: AppTheme.textDark)),
+                                Text(notif.body, style: const TextStyle(fontSize: 13, color: AppTheme.textLight)),
                                 const SizedBox(height: 4),
                                 Text(
                                   notif.createdAt,
@@ -364,98 +364,199 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showLinkWatchDialog() {
     final textController = TextEditingController();
+    bool isLinking = false;
+    String? feedbackMessage;
+    bool feedbackIsError = false;
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.watch_rounded, color: AppTheme.electricBlue),
-              SizedBox(width: 10),
-              Text('Vincular Smartwatch', style: TextStyle(color: AppTheme.textDark, fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Ingresa el código de 4 dígitos (PIN) que se muestra en la pantalla de tu reloj inteligente.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.watch_rounded, color: AppTheme.glassCyan),
+                  SizedBox(width: 10),
+                  Text('Vincular Smartwatch',
+                      style: TextStyle(
+                          color: AppTheme.textLight, fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: textController,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: 8, color: AppTheme.textDark),
-                decoration: InputDecoration(
-                  hintText: '0000',
-                  counterText: '',
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () async {
-                final pin = textController.text.trim();
-                if (pin.length != 4) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('El PIN debe tener 4 dígitos')),
-                  );
-                  return;
-                }
-
-                // Guardar las referencias antes de la llamada asíncrona para evitar warnings
-                final navigator = Navigator.of(context);
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-                navigator.pop(); // Cerrar diálogo de PIN
-
-                // Mostrar cargando
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (ctx) {
-                    return const Center(child: CircularProgressIndicator(color: AppTheme.electricBlue));
-                  },
-                );
-
-                final response = await MySqlDbHelper.linkPairingCode(pin, widget.email);
-                
-                if (mounted) {
-                  navigator.pop(); // Quitar cargando (cierra el diálogo de carga al ser la ruta superior)
-                  final success = response['success'] as bool? ?? false;
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text(response['message'] as String? ?? 'Resultado de vinculación'),
-                      backgroundColor: success ? AppTheme.green : Colors.redAccent,
-                      behavior: SnackBarBehavior.floating,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.glassCyan.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                }
-              },
-              child: const Text('Vincular'),
-            ),
-          ],
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: AppTheme.glassCyan, size: 18),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Abre la app del reloj y espera que aparezca el código PIN de 4 dígitos.',
+                            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: textController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 10,
+                        color: AppTheme.textLight),
+                    decoration: InputDecoration(
+                      hintText: '0000',
+                      counterText: '',
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.glassCyan, width: 2),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      // Limpiar mensaje de feedback al escribir
+                      if (feedbackMessage != null) {
+                        setDialogState(() {
+                          feedbackMessage = null;
+                        });
+                      }
+                    },
+                  ),
+                  if (feedbackMessage != null) ...[
+                    const SizedBox(height: 10),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: feedbackIsError
+                            ? Colors.redAccent.withValues(alpha: 0.1)
+                            : AppTheme.green.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: feedbackIsError ? Colors.redAccent : AppTheme.green,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            feedbackIsError ? Icons.error_outline : Icons.check_circle_outline,
+                            color: feedbackIsError ? Colors.redAccent : AppTheme.green,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              feedbackMessage!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: feedbackIsError ? Colors.redAccent : AppTheme.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isLinking ? null : () => Navigator.pop(context),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.glassCyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    disabledBackgroundColor: AppTheme.glassCyan.withValues(alpha: 0.5),
+                  ),
+                  onPressed: isLinking
+                      ? null
+                      : () async {
+                          final pin = textController.text.trim();
+                          if (pin.length != 4) {
+                            setDialogState(() {
+                              feedbackMessage = 'El PIN debe tener exactamente 4 dígitos';
+                              feedbackIsError = true;
+                            });
+                            return;
+                          }
+
+                          setDialogState(() {
+                            isLinking = true;
+                            feedbackMessage = null;
+                          });
+
+                          final response =
+                              await MySqlDbHelper.linkPairingCode(pin, widget.email);
+
+                          if (mounted) {
+                            final success = response['success'] as bool? ?? false;
+                            final message = response['message'] as String? ?? 'Resultado de vinculación';
+
+                            if (success) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      const Text('⌚ ', style: TextStyle(fontSize: 18)),
+                                      Expanded(child: Text(message)),
+                                    ],
+                                  ),
+                                  backgroundColor: AppTheme.green,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                  margin: const EdgeInsets.all(16),
+                                  duration: const Duration(seconds: 3),
+                                ),
+                              );
+                            } else {
+                              setDialogState(() {
+                                isLinking = false;
+                                feedbackMessage = message;
+                                feedbackIsError = true;
+                              });
+                            }
+                          }
+                        },
+                  icon: isLinking
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.link, size: 18),
+                  label: Text(isLinking ? 'Vinculando...' : 'Vincular'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -753,9 +854,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final int maxIndex = destinations.length - 1;
     final int activeIndex = widget.pageIndex > maxIndex ? maxIndex : widget.pageIndex;
 
-    return Scaffold(
-      body: Column(
-        children: [
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.backgroundGradient1,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true, // Allow body to flow under the transparent bottom nav
+        body: Column(
+          children: [
           // Dynamic Points Header with dynamic logout button
           PointsHeader(
             points: _totalPoints,
@@ -769,10 +876,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppTheme.electricBlue.withValues(alpha: 0.05),
+                  color: AppTheme.glassCyan.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppTheme.electricBlue.withValues(alpha: 0.1),
+                    color: AppTheme.glassCyan.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Row(
@@ -791,7 +898,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
+                              color: AppTheme.textLight,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -810,9 +917,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.electricBlue),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.glassCyan),
                             )
-                          : const Icon(Icons.sync, size: 18, color: AppTheme.electricBlue),
+                          : const Icon(Icons.sync, size: 18, color: AppTheme.glassCyan),
                       onPressed: () => _syncWeather(),
                       tooltip: 'Sincronizar Prioridades con el Clima',
                     ),
@@ -832,40 +939,35 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            )
-          ],
+          color: AppTheme.cardGlass,
+          border: const Border(top: BorderSide(color: AppTheme.borderGlass, width: 1)),
         ),
         child: NavigationBarTheme(
           data: NavigationBarThemeData(
-            indicatorColor: AppTheme.electricBlue.withValues(alpha: 0.08),
+            indicatorColor: AppTheme.glassCyan.withValues(alpha: 0.3),
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
                 return const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.electricBlue,
+                  color: AppTheme.textLight,
                 );
               }
               return const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF8E9CB2),
+                color: AppTheme.textMuted,
               );
             }),
             iconTheme: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
                 return const IconThemeData(
-                  color: AppTheme.electricBlue,
+                  color: AppTheme.textLight,
                   size: 22,
                 );
               }
               return const IconThemeData(
-                color: Color(0xFF8E9CB2),
+                color: AppTheme.textMuted,
                 size: 22,
               );
             }),
@@ -875,7 +977,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onDestinationSelected: (index) {
               context.go('/home/$index?role=${widget.role}&email=${widget.email}&name=${Uri.encodeComponent(widget.name)}');
             },
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.transparent,
             elevation: 0,
             height: 65,
             destinations: destinations,

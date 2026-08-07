@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../config/theme/app_theme.dart';
 
 class GlassCard extends StatelessWidget {
   final Widget child;
@@ -17,7 +18,7 @@ class GlassCard extends StatelessWidget {
     this.borderRadius = 24.0,
     this.borderColor,
     this.shadow,
-    this.blur = 15.0,
+    this.blur = 20.0, // Increased blur for better effect
     this.backgroundColor,
   });
 
@@ -30,18 +31,18 @@ class GlassCard extends StatelessWidget {
         child: Container(
           padding: padding ?? const EdgeInsets.all(20.0),
           decoration: BoxDecoration(
-            color: backgroundColor ?? Colors.white.withValues(alpha: 0.75),
+            color: backgroundColor ?? AppTheme.cardGlass,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: borderColor ?? Colors.white.withValues(alpha: 0.4),
-              width: 1.5,
+              color: borderColor ?? AppTheme.borderGlass,
+              width: 1.0, // Thinner border looks better on glass
             ),
             boxShadow: shadow ??
                 [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
                   ),
                 ],
           ),
