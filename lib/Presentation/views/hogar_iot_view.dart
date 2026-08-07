@@ -62,45 +62,36 @@ class _SmartDeviceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String iconEmoji = '💡';
-    Color activeColor = AppTheme.accent;
+    Color activeColor = AppTheme.accentTertiary;
     
     if (device.type == 'thermostat') {
       iconEmoji = '🌡️';
-      activeColor = AppTheme.warning;
+      activeColor = AppTheme.accentPrimary;
     } else if (device.type == 'tv') {
       iconEmoji = '📺';
-      activeColor = AppTheme.accent;
+      activeColor = AppTheme.accentSecondary;
     } else {
-      activeColor = AppTheme.accent;
+      activeColor = AppTheme.accentTertiary;
     }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: AppTheme.neoBackground,
+        color: Colors.white,
+        border: Border.all(color: AppTheme.gameBorder, width: 3),
         boxShadow: [
           if (device.isOn) ...[
             BoxShadow(
-              color: activeColor.withValues(alpha: 0.3),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-            const BoxShadow(
-              color: AppTheme.neoShadowLight,
-              blurRadius: 12,
-              offset: Offset(-4, -4),
+              color: activeColor,
+              blurRadius: 0,
+              offset: const Offset(4, 6),
             ),
           ] else ...[
             const BoxShadow(
-              color: AppTheme.neoShadowDark,
-              blurRadius: 12,
-              offset: Offset(4, 4),
-            ),
-            const BoxShadow(
-              color: AppTheme.neoShadowLight,
-              blurRadius: 12,
-              offset: Offset(-4, -4),
+              color: AppTheme.gameBorder,
+              blurRadius: 0,
+              offset: Offset(4, 6),
             ),
           ]
         ],
@@ -136,8 +127,9 @@ class _SmartDeviceCard extends StatelessWidget {
                         activeColor: Colors.white,
                         activeTrackColor: activeColor,
                         inactiveThumbColor: Colors.white,
-                        inactiveTrackColor: const Color(0xFFE2E8F0),
-                        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                        inactiveTrackColor: AppTheme.textMuted.withValues(alpha: 0.2),
+                        trackOutlineColor: WidgetStateProperty.all(AppTheme.gameBorder),
+                        trackOutlineWidth: WidgetStateProperty.all(2),
                       ),
                     ),
                   ],
@@ -165,9 +157,7 @@ class _SmartDeviceCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: device.isOn ? activeColor : const Color(0xFFCBD5E1),
-                            boxShadow: device.isOn ? [
-                              BoxShadow(color: activeColor.withValues(alpha: 0.5), blurRadius: 4)
-                            ] : null,
+                            border: Border.all(color: AppTheme.gameBorder, width: 2),
                           ),
                         ),
                         const SizedBox(width: 6),

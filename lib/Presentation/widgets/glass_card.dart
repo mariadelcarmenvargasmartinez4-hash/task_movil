@@ -5,9 +5,9 @@ class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double borderRadius;
-  final Color? borderColor; // Not used in Neumorphism typically, kept for compatibility
+  final Color? borderColor;
   final List<BoxShadow>? shadow;
-  final double blur; // Used for neumorphic blur radius
+  final double blur; 
   final Color? backgroundColor;
   final bool isConcave;
 
@@ -15,12 +15,12 @@ class GlassCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.borderRadius = 24.0,
+    this.borderRadius = 20.0,
     this.borderColor,
     this.shadow,
-    this.blur = 20.0,
+    this.blur = 0.0, // No blur for game style
     this.backgroundColor,
-    this.isConcave = false, // Neumorphic addition
+    this.isConcave = false,
   });
 
   @override
@@ -28,21 +28,19 @@ class GlassCard extends StatelessWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppTheme.neoBackground,
+        color: backgroundColor ?? AppTheme.cardColor,
         borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: borderColor ?? AppTheme.gameBorder,
+          width: 3.0,
+        ),
         boxShadow: shadow ??
             [
-              // Dark shadow (bottom right)
+              // Hard drop shadow
               BoxShadow(
-                color: AppTheme.neoShadowDark,
-                blurRadius: blur,
-                offset: Offset(blur / 2, blur / 2),
-              ),
-              // Light shadow (top left)
-              BoxShadow(
-                color: AppTheme.neoShadowLight,
-                blurRadius: blur,
-                offset: Offset(-blur / 2, -blur / 2),
+                color: AppTheme.gameBorder,
+                blurRadius: 0,
+                offset: const Offset(4, 6),
               ),
             ],
       ),
@@ -50,3 +48,4 @@ class GlassCard extends StatelessWidget {
     );
   }
 }
+

@@ -131,10 +131,10 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.neoBackground,
-                foregroundColor: AppTheme.accent,
-                shadowColor: AppTheme.neoShadowDark,
-                elevation: 4,
+                backgroundColor: AppTheme.accentPrimary,
+                foregroundColor: Colors.white,
+                shadowColor: AppTheme.gameBorder,
+                elevation: 0,
               ),
               child: const Text('Crear'),
             ),
@@ -199,11 +199,11 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Crear Premio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neoBackground,
-                    foregroundColor: AppTheme.accent,
+                    backgroundColor: AppTheme.accentPrimary,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    elevation: 4,
-                    shadowColor: AppTheme.neoShadowDark.withValues(alpha: 0.4),
+                    elevation: 0,
+                    shadowColor: AppTheme.gameBorder,
                   ),
                 ),
             ],
@@ -216,11 +216,11 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
             builder: (context, child) {
               return Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.neoBackground,
+                  color: AppTheme.accentTertiary,
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.gameBorder, width: 3),
                   boxShadow: const [
-                    BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
-                    BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
+                    BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(4, 6)),
                   ],
                 ),
                 padding: const EdgeInsets.all(20.0),
@@ -229,12 +229,9 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.neoBackground,
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: const [
-                          BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
-                          BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
-                        ],
+                        border: Border.all(color: AppTheme.gameBorder, width: 3),
                       ),
                       child: const Icon(Icons.stars_rounded, color: AppTheme.warning, size: 36),
                     ),
@@ -246,18 +243,18 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                           Text(
                             widget.isParent ? 'Saldo del Hogar' : 'Tus Puntos Disponibles',
                             style: const TextStyle(
-                              fontSize: 13, 
-                              color: AppTheme.textMuted, 
-                              fontWeight: FontWeight.w600,
+                              fontSize: 14, 
+                              color: AppTheme.textDark, 
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${_pointsAnimation.value} pts',
+                            '${_pointsAnimation.value} XP',
                             style: const TextStyle(
                               fontSize: 32, 
                               fontWeight: FontWeight.w900, 
-                              color: AppTheme.accent,
+                              color: AppTheme.textDark,
                               letterSpacing: -1,
                             ),
                           ),
@@ -306,11 +303,11 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
 
                 return Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.neoBackground,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppTheme.gameBorder, width: 3),
                     boxShadow: const [
-                      BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
-                      BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
+                      BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(4, 6)),
                     ],
                   ),
                   child: Padding(
@@ -323,13 +320,10 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                           height: 56,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppTheme.neoBackground,
-                            boxShadow: canClaim ? const [
-                              BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
-                              BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
-                            ] : [],
+                            color: canClaim ? AppTheme.accentSecondary : AppTheme.textMuted.withValues(alpha: 0.2),
+                            border: Border.all(color: AppTheme.gameBorder, width: 2),
                           ),
-                          child: Icon(Icons.card_giftcard_rounded, color: canClaim ? AppTheme.accent : AppTheme.textMuted, size: 28),
+                          child: Icon(Icons.card_giftcard_rounded, color: canClaim ? Colors.white : AppTheme.textMuted, size: 28),
                         ),
                         const SizedBox(width: 16),
 
@@ -342,7 +336,7 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                                 reward.title,
                                 style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w900,
                                   color: canClaim ? AppTheme.textDark : AppTheme.textMuted,
                                 ),
                               ),
@@ -355,9 +349,9 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                                       child: LinearProgressIndicator(
                                         value: progress,
                                         minHeight: 8,
-                                        backgroundColor: AppTheme.neoShadowDark.withValues(alpha: 0.2),
+                                        backgroundColor: AppTheme.textMuted.withValues(alpha: 0.2),
                                         valueColor: AlwaysStoppedAnimation<Color>(
-                                          canClaim ? AppTheme.success : AppTheme.accent,
+                                          canClaim ? AppTheme.success : AppTheme.accentTertiary,
                                         ),
                                       ),
                                     ),
@@ -366,9 +360,9 @@ class _RecompensasViewState extends State<RecompensasView> with SingleTickerProv
                                   Text(
                                     '${reward.points} pts',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: canClaim ? AppTheme.success : AppTheme.accent,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      color: canClaim ? AppTheme.success : AppTheme.accentTertiary,
                                     ),
                                   ),
                                 ],
