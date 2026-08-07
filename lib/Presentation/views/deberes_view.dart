@@ -49,7 +49,7 @@ class DeberesView extends StatelessWidget {
                 'Crear Nueva Tarea',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
+                  color: AppTheme.textLight,
                 ),
               ),
               content: SingleChildScrollView(
@@ -151,12 +151,12 @@ class DeberesView extends StatelessWidget {
                           Expanded(
                             child: Text(
                               'Fecha: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textLight),
                             ),
                           ),
                           TextButton.icon(
-                            icon: const Icon(Icons.calendar_month, color: AppTheme.electricBlue),
-                            label: const Text('Elegir', style: TextStyle(color: AppTheme.electricBlue)),
+                            icon: const Icon(Icons.calendar_month, color: AppTheme.glassCyan),
+                            label: const Text('Elegir', style: TextStyle(color: AppTheme.glassCyan)),
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: context,
@@ -195,7 +195,7 @@ class DeberesView extends StatelessWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.electricBlue,
+                    backgroundColor: AppTheme.glassCyan,
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('Crear'),
@@ -249,7 +249,7 @@ class DeberesView extends StatelessWidget {
                 'Editar Tarea',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
+                  color: AppTheme.textLight,
                 ),
               ),
               content: SingleChildScrollView(
@@ -351,12 +351,12 @@ class DeberesView extends StatelessWidget {
                           Expanded(
                             child: Text(
                               'Fecha: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textLight),
                             ),
                           ),
                           TextButton.icon(
-                            icon: const Icon(Icons.calendar_month, color: AppTheme.electricBlue),
-                            label: const Text('Elegir', style: TextStyle(color: AppTheme.electricBlue)),
+                            icon: const Icon(Icons.calendar_month, color: AppTheme.glassCyan),
+                            label: const Text('Elegir', style: TextStyle(color: AppTheme.glassCyan)),
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: context,
@@ -402,7 +402,7 @@ class DeberesView extends StatelessWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.electricBlue,
+                    backgroundColor: AppTheme.glassCyan,
                     foregroundColor: Colors.white,
                   ),
                   child: const Text('Guardar'),
@@ -436,20 +436,20 @@ class DeberesView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8E9CB2),
+                  color: AppTheme.textMuted,
                   letterSpacing: 0.8,
                 ),
               ),
               if (isParent)
                 TextButton.icon(
                   onPressed: () => _showAddTaskDialog(context),
-                  icon: const Icon(Icons.add, size: 16, color: AppTheme.electricBlue),
+                  icon: const Icon(Icons.add, size: 16, color: AppTheme.accent),
                   label: const Text(
                     'Crear Tarea',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.electricBlue,
+                      color: AppTheme.accent,
                     ),
                   ),
                 ),
@@ -490,12 +490,10 @@ class DeberesView extends StatelessWidget {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       borderRadius: 20,
-      backgroundColor: Colors.white,
-      shadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.02),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
+      backgroundColor: AppTheme.neoBackground,
+      shadow: const [
+        BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 10, offset: Offset(4, 4)),
+        BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 10, offset: Offset(-4, -4)),
         )
       ],
       child: Row(
@@ -509,10 +507,14 @@ class DeberesView extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFFD2D8E2),
+                  color: AppTheme.neoBackground,
                   width: 2,
                 ),
-                color: Colors.white,
+                color: AppTheme.neoBackground,
+                boxShadow: const [
+                  BoxShadow(color: AppTheme.neoShadowDark, blurRadius: 4, offset: Offset(2, 2)),
+                  BoxShadow(color: AppTheme.neoShadowLight, blurRadius: 4, offset: Offset(-2, -2)),
+                ],
               ),
             ),
           ),
@@ -581,7 +583,7 @@ class DeberesView extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.electricBlue,
+                  color: AppTheme.accent,
                 ),
               ),
               if (isParent) ...[
@@ -590,7 +592,7 @@ class DeberesView extends StatelessWidget {
                   onPressed: () => _showEditTaskDialog(context, task),
                   icon: const Icon(
                     Icons.edit_outlined,
-                    color: AppTheme.electricBlue,
+                    color: AppTheme.accent,
                     size: 18,
                   ),
                   visualDensity: VisualDensity.compact,
