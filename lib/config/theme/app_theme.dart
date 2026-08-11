@@ -17,7 +17,7 @@ class AppTheme {
 
   // Additional Gamified Colors
   static const Color green = Color(0xFF6BCB77);
-  static const Color glassCyan = Color(0xFF26C6DA);
+  static const Color glassCyan = Color(0xFF00838F); // Updated cyan for better contrast
   static const Color glassPurple = Color(0xFFBA68C8);
   static const Color deepNavy = Color(0xFF1A237E);
 
