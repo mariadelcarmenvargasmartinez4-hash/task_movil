@@ -14,7 +14,7 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
-    this.padding, // Optional padding for inner content
+    this.padding, // Inner padding for the card content
     this.borderRadius = 20.0,
     this.borderColor,
     this.shadow,
