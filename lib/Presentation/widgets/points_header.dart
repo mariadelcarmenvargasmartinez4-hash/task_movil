@@ -23,7 +23,7 @@ class PointsHeader extends StatefulWidget {
 class _PointsHeaderState extends State<PointsHeader> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  bool _isWatchHovered = false;
+  bool _isWatchHovered = false; // Tracks hover state for watch icon
 
   @override
   void initState() {
