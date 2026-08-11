@@ -493,7 +493,6 @@ class DeberesView extends StatelessWidget {
       backgroundColor: Colors.white,
       shadow: const [
         BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(4, 6)),
-        )
       ],
       child: Row(
         children: [

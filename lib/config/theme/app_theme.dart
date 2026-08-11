@@ -11,8 +11,15 @@ class AppTheme {
   
   static const Color textDark = Color(0xFF1E1E24); // Dark heavy text
   static const Color textMuted = Color(0xFF757575); // Gray for secondary text
+  static const Color textLight = Colors.white; // Light text
   
   static const Color cardColor = Colors.white;
+
+  // Additional Gamified Colors
+  static const Color green = Color(0xFF6BCB77);
+  static const Color glassCyan = Color(0xFF00838F); // Updated cyan for better contrast
+  static const Color glassPurple = Color(0xFFBA68C8);
+  static const Color deepNavy = Color(0xFF1A237E);
 
   // State colors (Game Accents)
   static const Color success = Color(0xFF6BCB77); // Game Green
