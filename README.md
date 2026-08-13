@@ -2,6 +2,11 @@
 
 A new Flutter project.
 
+## Características Nuevas
+
+*   **Sincronización de Clima (API Open-Meteo):** Las prioridades de los deberes se recalculan dinámicamente según las condiciones climáticas del hogar.
+*   **Historial de Alertas Familiares:** La aplicación almacena y despliega notificaciones en tiempo real cuando se añade un deber, se completa una tarea o se canjea un premio.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

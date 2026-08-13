@@ -530,7 +530,7 @@ switch ($action) {
         }
         try {
             $pin = sprintf("%04d", rand(0, 9999));
-            $expiresAt = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
             $stmt = $db->prepare("INSERT INTO smartwatch_pairing (device_id, pin_code, username, expires_at) 
                                   VALUES (?, ?, NULL, ?) 
@@ -580,9 +580,8 @@ switch ($action) {
         }
 
         try {
-            $now = date('Y-m-d H:i:s');
-            $stmt = $db->prepare("SELECT username FROM smartwatch_pairing WHERE device_id = ? AND expires_at > ?");
-            $stmt->execute([$deviceId, $now]);
+            $stmt = $db->prepare("SELECT username FROM smartwatch_pairing WHERE device_id = ?");
+            $stmt->execute([$deviceId]);
             $row = $stmt->fetch();
 
             if ($row && !empty($row['username'])) {
