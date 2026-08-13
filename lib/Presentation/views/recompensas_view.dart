@@ -3,7 +3,7 @@ import '../../domain/domain.dart';
 import '../../config/theme/app_theme.dart';
 import '../widgets/glass_card.dart';
 
-class RecompensasView extends StatelessWidget {
+class RecompensasView extends StatefulWidget {
   final List<FamilyReward> rewards;
   final int totalPoints;
   final bool isParent;
@@ -23,6 +23,47 @@ class RecompensasView extends StatelessWidget {
     this.onRewardClaimed,
   });
 
+  @override
+  State<RecompensasView> createState() => _RecompensasViewState();
+}
+
+class _RecompensasViewState extends State<RecompensasView> with SingleTickerProviderStateMixin {
+  late AnimationController _pointsAnimController;
+  late Animation<int> _pointsAnimation;
+  int _lastPoints = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _lastPoints = widget.totalPoints;
+    _pointsAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _pointsAnimation = IntTween(begin: _lastPoints, end: widget.totalPoints).animate(
+      CurvedAnimation(parent: _pointsAnimController, curve: Curves.easeOutCubic),
+    );
+    _pointsAnimController.forward(from: 0);
+  }
+
+  @override
+  void didUpdateWidget(RecompensasView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.totalPoints != widget.totalPoints) {
+      _pointsAnimation = IntTween(begin: _lastPoints, end: widget.totalPoints).animate(
+        CurvedAnimation(parent: _pointsAnimController, curve: Curves.easeOutCubic),
+      );
+      _lastPoints = widget.totalPoints;
+      _pointsAnimController.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pointsAnimController.dispose();
+    super.dispose();
+  }
+
   void _showAddRewardDialog(BuildContext context) {
     final titleController = TextEditingController();
     final pointsController = TextEditingController();
@@ -32,6 +73,7 @@ class RecompensasView extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text('Nueva Recompensa', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Form(
             key: formKey,
@@ -81,7 +123,7 @@ class RecompensasView extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 if (formKey.currentState!.validate()) {
-                  onRewardAdded?.call(
+                  widget.onRewardAdded?.call(
                     titleController.text.trim(),
                     int.parse(pointsController.text.trim()),
                   );
@@ -89,8 +131,10 @@ class RecompensasView extends StatelessWidget {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricBlue,
+                backgroundColor: AppTheme.accentPrimary,
                 foregroundColor: Colors.white,
+                shadowColor: AppTheme.gameBorder,
+                elevation: 0,
               ),
               child: const Text('Crear'),
             ),
@@ -105,20 +149,21 @@ class RecompensasView extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Text('Confirmar Canje', style: TextStyle(fontWeight: FontWeight.bold)),
           content: Text('¿Deseas canjear "${reward.title}" por ${reward.points} puntos?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+              child: const Text('Cancelar', style: TextStyle(color: AppTheme.textMuted)),
             ),
             ElevatedButton(
               onPressed: () {
-                onRewardClaimed?.call(reward.id, reward.points);
+                widget.onRewardClaimed?.call(reward.id, reward.points);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.green,
+                backgroundColor: AppTheme.success,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Confirmar'),
@@ -140,72 +185,108 @@ class RecompensasView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isParent ? 'ADMINISTRAR RECOMPENSAS' : 'CANJEAR RECOMPENSAS',
+                widget.isParent ? 'ADMINISTRAR RECOMPENSAS' : 'CANJEAR RECOMPENSAS',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF8E9CB2),
-                  letterSpacing: 0.8,
+                  color: AppTheme.textMuted,
+                  letterSpacing: 1.2,
                 ),
               ),
-              if (isParent)
+              if (widget.isParent)
                 ElevatedButton.icon(
                   onPressed: () => _showAddRewardDialog(context),
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Crear Premio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.electricBlue,
+                    backgroundColor: AppTheme.accentPrimary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    elevation: 0,
+                    shadowColor: AppTheme.gameBorder,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // Total points display
-          GlassCard(
-            padding: const EdgeInsets.all(16.0),
-            borderRadius: 20,
-            backgroundColor: Colors.white,
-            child: Row(
-              children: [
-                const Icon(Icons.stars, color: Colors.amber, size: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isParent ? 'Saldo del Hogar' : 'Tus Puntos Disponibles',
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$totalPoints pts',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.textDark),
-                      ),
-                    ],
-                  ),
+          // Total points animated display
+          AnimatedBuilder(
+            animation: _pointsAnimation,
+            builder: (context, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.accentTertiary,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.gameBorder, width: 3),
+                  boxShadow: const [
+                    BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(4, 6)),
+                  ],
                 ),
-              ],
-            ),
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.gameBorder, width: 3),
+                      ),
+                      child: const Icon(Icons.stars_rounded, color: AppTheme.warning, size: 36),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.isParent ? 'Saldo del Hogar' : 'Tus Puntos Disponibles',
+                            style: const TextStyle(
+                              fontSize: 14, 
+                              color: AppTheme.textDark, 
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${_pointsAnimation.value} XP',
+                            style: const TextStyle(
+                              fontSize: 32, 
+                              fontWeight: FontWeight.w900, 
+                              color: AppTheme.textDark,
+                              letterSpacing: -1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
           ),
           const SizedBox(height: 24),
 
-          if (rewards.isEmpty)
+          if (widget.rewards.isEmpty)
             GlassCard(
               padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
               borderRadius: 24,
               backgroundColor: Colors.white,
               child: const Center(
-                child: Text(
-                  'No hay recompensas creadas todavía.',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                  ),
+                child: Column(
+                  children: [
+                    Icon(Icons.card_giftcard_rounded, size: 48, color: AppTheme.textMuted),
+                    SizedBox(height: 16),
+                    Text(
+                      'No hay recompensas creadas todavía.',
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -213,79 +294,111 @@ class RecompensasView extends StatelessWidget {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: rewards.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemCount: widget.rewards.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {
-                final reward = rewards[index];
-                final canClaim = totalPoints >= reward.points;
+                final reward = widget.rewards[index];
+                final canClaim = widget.totalPoints >= reward.points;
+                final progress = (widget.totalPoints / reward.points).clamp(0.0, 1.0);
 
-                return GlassCard(
-                  padding: const EdgeInsets.all(16.0),
-                  borderRadius: 24,
-                  backgroundColor: Colors.white,
-                  child: Row(
-                    children: [
-                      // Reward Icon / Avatar
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.electricBlue.withValues(alpha: 0.08),
-                        ),
-                        child: const Icon(Icons.card_giftcard, color: AppTheme.electricBlue, size: 24),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Title & Points Cost
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              reward.title,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textDark,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Costo: ${reward.points} pts',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textMuted,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Action Button
-                      if (isParent)
-                        IconButton(
-                          onPressed: () => onRewardDeleted?.call(reward.id),
-                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                        )
-                      else
-                        ElevatedButton(
-                          onPressed: canClaim ? () => _showClaimConfirmationDialog(context, reward) : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.green,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: Colors.grey.shade200,
-                            disabledForegroundColor: Colors.grey.shade400,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          ),
-                          child: Text(
-                            canClaim ? 'Canjear' : 'Faltan Puntos',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                        ),
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppTheme.gameBorder, width: 3),
+                    boxShadow: const [
+                      BoxShadow(color: AppTheme.gameBorder, blurRadius: 0, offset: Offset(4, 6)),
                     ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        // Reward Icon with Gradient
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: canClaim ? AppTheme.accentSecondary : AppTheme.textMuted.withValues(alpha: 0.2),
+                            border: Border.all(color: AppTheme.gameBorder, width: 2),
+                          ),
+                          child: Icon(Icons.card_giftcard_rounded, color: canClaim ? Colors.white : AppTheme.textMuted, size: 28),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Title & Progress Bar
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                reward.title,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  color: canClaim ? AppTheme.textDark : AppTheme.textMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: LinearProgressIndicator(
+                                        value: progress,
+                                        minHeight: 8,
+                                        backgroundColor: AppTheme.textMuted.withValues(alpha: 0.2),
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          canClaim ? AppTheme.success : AppTheme.accentTertiary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    '${reward.points} pts',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      color: canClaim ? AppTheme.success : AppTheme.accentTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Action Button
+                        if (widget.isParent)
+                          IconButton(
+                            onPressed: () => widget.onRewardDeleted?.call(reward.id),
+                            icon: const Icon(Icons.delete_rounded, color: AppTheme.danger),
+                            tooltip: 'Eliminar Recompensa',
+                          )
+                        else
+                          ElevatedButton(
+                            onPressed: canClaim ? () => _showClaimConfirmationDialog(context, reward) : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.success,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: Colors.grey.shade100,
+                              disabledForegroundColor: Colors.grey.shade400,
+                              elevation: canClaim ? 4 : 0,
+                              shadowColor: AppTheme.success.withValues(alpha: 0.4),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: Text(
+                              canClaim ? 'Canjear' : 'Faltan',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
