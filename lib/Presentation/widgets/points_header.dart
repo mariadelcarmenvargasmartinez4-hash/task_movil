@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/theme/app_theme.dart';
-import 'glass_card.dart';
 
 class PointsHeader extends StatefulWidget {
   final int points;

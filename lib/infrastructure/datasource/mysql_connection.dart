@@ -6,10 +6,10 @@ import '../../domain/domain.dart';
 class MySqlDbHelper {
   // Configuración del host dinámico para conectar desde web, emulador Android o escritorio
   static final String _baseUrl = kIsWeb 
-      ? 'http://localhost/hometask_api/api.php' 
+      ? 'http://localhost/apirest/api.php' 
       : (defaultTargetPlatform == TargetPlatform.android 
-          ? 'http://10.0.2.2/hometask_api/api.php' 
-          : 'http://localhost/hometask_api/api.php');
+          ? 'http://10.0.2.2/apirest/api.php' 
+          : 'http://localhost/apirest/api.php');
 
   // Método auxiliar para realizar peticiones POST a la API PHP en XAMPP
   static Future<dynamic> _post(String action, [Map<String, dynamic>? params]) async {
