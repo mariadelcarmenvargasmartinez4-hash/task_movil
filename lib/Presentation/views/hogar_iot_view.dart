@@ -124,7 +124,7 @@ class _SmartDeviceCard extends StatelessWidget {
                       child: Switch(
                         value: device.isOn,
                         onChanged: (_) => onToggle(),
-                        activeColor: Colors.white,
+                        activeThumbColor: Colors.white,
                         activeTrackColor: activeColor,
                         inactiveThumbColor: Colors.white,
                         inactiveTrackColor: AppTheme.textMuted.withValues(alpha: 0.2),
